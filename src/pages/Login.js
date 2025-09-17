@@ -14,9 +14,10 @@ const Login = () => {
     setMessage('')
     const { error } = await supabase.auth.signInWithOtp({
       email:theemail,
-      options:｛
-        emailRedirectTo:"https://Jason4zh.github.io/classerrorbook"
-      ｝
+       options: {
+      shouldCreateUser: true,
+      emailRedirectTo: 'https://Jason4zh.github.io/classerrorbook',
+    },
     })
     if (error) {
       setMessage('登录失败: ' + error.message)
