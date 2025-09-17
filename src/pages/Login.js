@@ -3,7 +3,7 @@ import supabase from '../config/supabaseClient'
 import { useNavigate } from 'react-router-dom'
 
 const Login = () => {
-  const [email, setEmail] = useState('')
+  const [theemail, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const navigate = useNavigate()
@@ -12,7 +12,12 @@ const Login = () => {
     e.preventDefault()
     setLoading(true)
     setMessage('')
-    const { error } = await supabase.auth.signInWithOtp({ email })
+    const { error } = await supabase.auth.signInWithOtp({
+      email:theemail,
+      options:｛
+        emailRedirectTo:"https://Jason4zh.github.io/classerrorbook"
+      ｝
+    })
     if (error) {
       setMessage('登录失败: ' + error.message)
     } else {
@@ -28,7 +33,7 @@ const Login = () => {
         <input
           type="email"
           placeholder="请输入邮箱"
-          value={email}
+          value={theemail}
           onChange={e => setEmail(e.target.value)}
           required
           style={{ width: '100%', padding: 10, marginBottom: 16, borderRadius: 6, border: '1px solid #ccc' }}
