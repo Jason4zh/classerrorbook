@@ -27,6 +27,7 @@ const Home = () => {
         setFetchError(null)
       }
     }
+
     fetchQuestions()
   }, [])
 
@@ -128,6 +129,15 @@ const Home = () => {
                 <div className="question" style={{ fontSize: 16, marginBottom: 10, lineHeight: 1.6 }}>
                   {q.content || '题干内容'}
                 </div>
+                {q.imageurl && (
+                  <div className="question-image" style={{ marginBottom: 10 }}>
+                    <img
+                      src={q.imageurl}
+                      alt="题目图片"
+                      style={{ maxWidth: '100%', maxHeight: 220, borderRadius: 6, border: '1px solid #eee', display: 'block', margin: '0 auto' }}
+                    />
+                  </div>
+                )}
                 <div className="answer" style={{ fontSize: 15, marginBottom: 8, color: '#666' }}>
                   <span style={{ fontWeight: 'bold', color: '#27ae60' }}>正确答案：</span>
                   {q.canswer || '无'}
@@ -135,6 +145,10 @@ const Home = () => {
                 <div className="answer" style={{ fontSize: 15, marginBottom: 8, color: '#666' }}>
                   <span style={{ fontWeight: 'bold', color: '#e67e22' }}>错误答案：</span>
                   {q.eanswer || '无'}
+                </div>
+                <div className="answer" style={{ fontSize: 15, marginBottom: 8, color: '#666' }}>
+                  <span style={{ fontWeight: 'bold', color: '#e67e22' }}>错误分析：</span>
+                  {q.analysis || '无'}
                 </div>
                 <div className="meta" style={{ fontSize: 14, color: '#999', marginTop: 10 }}>
                   {q.created_at.slice(0, 19) || '未知日期'} | 提交人：{q.author || '匿名'}

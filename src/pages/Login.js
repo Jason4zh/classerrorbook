@@ -14,7 +14,6 @@ const Login = () => {
     setMessage('')
     const { error } = await supabase.auth.signInWithOtp({
       email:theemail,
-    },
     })
     if (error) {
       setMessage('登录失败: ' + error.message)
