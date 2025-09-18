@@ -14,9 +14,6 @@ const Login = () => {
     setMessage('')
     const { error } = await supabase.auth.signInWithOtp({
       email:theemail,
-       options: {
-      shouldCreateUser: true,
-      emailRedirectTo: 'https://Jason4zh.github.io/classerrorbook',
     },
     })
     if (error) {
