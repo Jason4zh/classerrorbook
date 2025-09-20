@@ -23,6 +23,7 @@
 - 部署：GitHub Pages
 
 ## 本地开发
+0. 前提条件：需安装git和nodejs最新版
 
 1. 克隆仓库
 ```bash
