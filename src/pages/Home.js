@@ -76,22 +76,57 @@ const Home = () => {
   }
 
   return (
-    <div className="container" style={{ maxWidth: 1200, margin: '0 auto', padding: 20 }}>
+    <div
+      className="container"
+      style={{
+        maxWidth: 900,
+        margin: '0 auto',
+        padding: '32px 12px 60px 12px',
+        background: '#f7f9fb',
+        minHeight: '100vh'
+      }}
+    >
       {/* 导航 */}
       <div className="nav" style={{ marginBottom: 20 }}>
         <Link to='/' className="nav-link" style={{ color: '#3498db', textDecoration: 'none', fontSize: 16 }}>← 返回首页</Link>
       </div>
 
       {/* 标题 */}
-      <h1 className="title" style={{ fontSize: 26, textAlign: 'center', marginBottom: 30, color: '#2c3e50' }}>查找错题</h1>
+      <h1 className="title" style={{
+        fontSize: 32,
+        fontWeight: 700,
+        color: '#1976d2',
+        marginBottom: 28,
+        textAlign: 'center',
+        letterSpacing: 1
+      }}>查找错题</h1>
 
       {/* 筛选卡片 */}
-      <div className="card" style={{ background: 'white', borderRadius: 8, boxShadow: '0 2px 6px rgba(0,0,0,0.06)', padding: 20, marginBottom: 25 }}>
-        <h2 className="card-title" style={{ fontSize: 18, marginBottom: 15, color: '#2c3e50' }}>筛选条件</h2>
+      <div className="card" style={{
+        background: '#fff',
+        borderRadius: 16,
+        boxShadow: '0 4px 24px rgba(25, 118, 210, 0.07)',
+        padding: '32px 24px',
+        marginBottom: 32
+      }}>
+        <h2 className="card-title" style={{
+          fontSize: 20,
+          fontWeight: 600,
+          color: '#1976d2',
+          marginBottom: 18
+        }}>筛选条件</h2>
         <div className="filter" style={{ display: 'flex', flexWrap: 'wrap', gap: 15, alignItems: 'center' }}>
           <div className="filter-item" style={{ flex: 1, minWidth: 180 }}>
-            <label style={{ display: 'block', marginBottom: 6, fontSize: 15 }}>学科</label>
-            <select className="input" value={subject} onChange={e => setSubject(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #ddd', borderRadius: 6, fontSize: 16 }}>
+            <label style={{ display: 'block', marginBottom: 7, fontSize: 15, fontWeight: 500, color: '#34495e' }}>学科</label>
+            <select className="input" value={subject} onChange={e => setSubject(e.target.value)} style={{
+              width: '100%',
+              padding: '12px 14px',
+              border: '1.5px solid #e3eaf2',
+              borderRadius: 8,
+              fontSize: 16,
+              background: '#fafdff',
+              marginTop: 4
+            }}>
               <option value="">全部</option>
               <option value="chinese">语文</option>
               <option value="math">数学</option>
@@ -105,8 +140,16 @@ const Home = () => {
             </select>
           </div>
           <div className="filter-item" style={{ flex: 1, minWidth: 180 }}>
-            <label style={{ display: 'block', marginBottom: 6, fontSize: 15 }}>题型</label>
-            <select className="input" value={type} onChange={e => setType(e.target.value)} style={{ width: '100%', padding: 10, border: '1px solid #ddd', borderRadius: 6, fontSize: 16 }}>
+            <label style={{ display: 'block', marginBottom: 7, fontSize: 15, fontWeight: 500, color: '#34495e' }}>题型</label>
+            <select className="input" value={type} onChange={e => setType(e.target.value)} style={{
+              width: '100%',
+              padding: '12px 14px',
+              border: '1.5px solid #e3eaf2',
+              borderRadius: 8,
+              fontSize: 16,
+              background: '#fafdff',
+              marginTop: 4
+            }}>
               <option value="">全部</option>
               <option value="single">单选题</option>
               <option value="multiple">多选题</option>
@@ -115,12 +158,32 @@ const Home = () => {
             </select>
           </div>
           <div className="search-item" style={{ flex: 2, minWidth: 250 }}>
-            <label style={{ display: 'block', marginBottom: 6, fontSize: 15 }}>搜索题干</label>
+            <label style={{ display: 'block', marginBottom: 7, fontSize: 15, fontWeight: 500, color: '#34495e' }}>搜索题干</label>
             <div style={{ display: 'flex', gap: 8 }}>
               <input type="text" className="input" value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="输入关键词"
-                style={{ width: '100%', padding: 10, border: '1px solid #ddd', borderRadius: 6, fontSize: 16 }} />
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  border: '1.5px solid #e3eaf2',
+                  borderRadius: 8,
+                  fontSize: 16,
+                  background: '#fafdff',
+                  marginTop: 4
+                }} />
               <button className="search-btn" onClick={handleSearch}
-                style={{ padding: 10, background: '#3498db', color: 'white', border: 'none', borderRadius: 6, fontSize: 16, cursor: 'pointer' }} >
+                style={{
+                  background: 'linear-gradient(90deg, #1976d2 60%, #42a5f5 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '12px 28px',
+                  fontSize: 16,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'background 0.2s, box-shadow 0.2s',
+                  boxShadow: '0 2px 8px rgba(25, 118, 210, 0.08)',
+                  marginTop: 4
+                }} >
                 搜索
               </button>
             </div>
@@ -129,14 +192,40 @@ const Home = () => {
       </div>
 
       {/* 错题展示卡片 */}
-      <div className="card" style={{ background: 'white', borderRadius: 8, boxShadow: '0 2px 6px rgba(0,0,0,0.06)', padding: 20 }}>
-        <h2 className="card-title" style={{ fontSize: 18, marginBottom: 15, color: '#2c3e50' }}>错题列表</h2>
+      <div className="card" style={{
+        background: '#fff',
+        borderRadius: 16,
+        boxShadow: '0 4px 24px rgba(25, 118, 210, 0.07)',
+        padding: '32px 24px',
+        marginBottom: 32
+      }}>
+        <h2 className="card-title" style={{
+          fontSize: 20,
+          fontWeight: 600,
+          color: '#1976d2',
+          marginBottom: 18
+        }}>错题列表</h2>
         {fetchError && <p>{fetchError}</p>}
         <div className="question-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
           {filteredQuestions && filteredQuestions.length > 0 ? (
             filteredQuestions.map((q, idx) => (
-              <div className="question-card" key={q.id || idx} style={{ border: '1px solid #eee', borderRadius: 6, padding: 15, background: 'white' }}>
-                <span className="subject-tag" style={{ display: 'inline-block', padding: '3px 10px', background: '#e3f2fd', color: '#3498db', borderRadius: 20, fontSize: 14, marginBottom: 10 }}>
+              <div className="question-card" key={q.id || idx} style={{
+                border: '1.5px solid #e3eaf2',
+                borderRadius: 12,
+                padding: 18,
+                background: '#fafdff',
+                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.04)'
+              }}>
+                <span className="subject-tag" style={{
+                  display: 'inline-block',
+                  padding: '3px 10px',
+                  background: '#e3f2fd',
+                  color: '#3498db',
+                  borderRadius: 20,
+                  fontSize: 14,
+                  marginBottom: 10,
+                  fontWeight: 500
+                }}>
                   {{
                     chinese: '语文',
                     math: '数学',
@@ -156,7 +245,8 @@ const Home = () => {
                   color: '#ef6c00',
                   borderRadius: 20,
                   fontSize: 14,
-                  fontWeight: 600
+                  fontWeight: 600,
+                  marginLeft: 8
                 }}>
                   {q.type === 'single' && '单选题'}
                   {q.type === 'multiple' && '多选题'}
@@ -164,7 +254,7 @@ const Home = () => {
                   {q.type === 'essay' && '解答题'}
                   {!['single', 'multiple', 'fill', 'essay'].includes(q.type) && (q.type || '未知题型')}
                 </span>
-                <div className="question" style={{ fontSize: 16, marginBottom: 10, lineHeight: 1.6 }}>
+                <div className="question" style={{ fontSize: 16, margin: '12px 0 10px 0', lineHeight: 1.7, color: '#34495e' }}>
                   {q.content || '题干内容'}
                 </div>
                 {q.imageurl && (
@@ -172,10 +262,16 @@ const Home = () => {
                     <img
                       src={q.imageurl}
                       alt="题目图片"
-                      style={{ maxWidth: '100%', maxHeight: 220, borderRadius: 6, border: '1px solid #eee', display: 'block', marginLeft: 0 }}
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: 220,
+                        borderRadius: 8,
+                        border: '1.5px solid #e3eaf2',
+                        display: 'block',
+                        marginLeft: 0
+                      }}
                     />
                   </div>
-
                 )}
                 <div className="answer" style={{ fontSize: 15, marginBottom: 8, color: '#666' }}>
                   <span style={{ fontWeight: 'bold', color: '#27ae60' }}>正确答案：</span>

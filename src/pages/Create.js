@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import supabase from "../config/supabaseClient"
+import { Link } from "react-router-dom"
 
 const Upload = () => {
   const navigate = useNavigate()
@@ -96,13 +97,8 @@ const Upload = () => {
         minHeight: '100vh'
       }}
     >
-      <div className="nav-bar" style={{ marginBottom: 18 }}>
-        <a href="search.html" className="nav-link" style={{
-          color: '#1976d2',
-          fontWeight: 500,
-          textDecoration: 'none',
-          fontSize: 16
-        }}>→ 去查找已上传的错题</a>
+      <div className="nav" style={{ marginBottom: 20 }}>
+        <Link to='/' className="nav-link" style={{ color: '#3498db', textDecoration: 'none', fontSize: 16 }}>← 返回首页</Link>
       </div>
       <h1 className="page-title" style={{
         fontSize: 32,
