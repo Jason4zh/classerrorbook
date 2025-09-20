@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/classerrorbook/static/css/main.121bba48.css",
-    "main.js": "/classerrorbook/static/js/main.54b84cd7.js",
+    "main.js": "/classerrorbook/static/js/main.dadab099.js",
     "index.html": "/classerrorbook/index.html",
     "main.121bba48.css.map": "/classerrorbook/static/css/main.121bba48.css.map",
-    "main.54b84cd7.js.map": "/classerrorbook/static/js/main.54b84cd7.js.map"
+    "main.dadab099.js.map": "/classerrorbook/static/js/main.dadab099.js.map"
   },
   "entrypoints": [
     "static/css/main.121bba48.css",
-    "static/js/main.54b84cd7.js"
+    "static/js/main.dadab099.js"
   ]
 }
