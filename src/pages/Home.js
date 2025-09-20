@@ -11,6 +11,8 @@ const Home = () => {
   const [subject, setSubject] = useState('')
   const [type, setType] = useState('')
   const [keyword, setKeyword] = useState('')
+  const [filteredQuestions, setFilteredQuestions] = useState([])
+
 
   useEffect(() => {
     // 这里获取supabase数据
@@ -35,6 +37,42 @@ const Home = () => {
   const handleSearch = () => {
     // 这里只是演示，实际筛选功能未实现
     console.log(`筛选条件：${subject || '全部学科'}，${type || '全部题型'}，关键词：${keyword}`)
+    let filtered = questions;
+
+    if (subject || type) {
+      filtered = questions.filter(q =>
+        (subject ? q.subject === subject : true) &&
+        (type ? q.type === type : true)
+      )
+    }
+    if (keyword) {
+      let score = 0;
+      let ranking = [];
+      let tkeyword = keyword.split('');
+      filtered.forEach(q => {
+        if(q.content.includes(keyword)) {
+          score += 114514;
+          return;
+        }
+        let tcontent = q.content.split('');
+        for (var i = 0; i < tcontent.length; i++) {
+          for (var j = 0; j < tkeyword.length; j++) {
+            if (tcontent[i] === tkeyword[j]) {
+              score++;
+            }
+          }
+        }
+        ranking.push({ id: q.id, score: score });
+        score = 0;
+      })
+      ranking.sort((a, b) => b.score - a.score);
+      ranking = ranking.filter(r => r.score > 0);
+      filtered = ranking.map(rank => {
+        return questions.find(q => q.id === rank.id);
+      }).filter(Boolean);
+    } 
+
+    setFilteredQuestions(filtered)
   }
 
   return (
@@ -82,7 +120,7 @@ const Home = () => {
               <input type="text" className="input" value={keyword} onChange={e => setKeyword(e.target.value)} placeholder="输入关键词"
                 style={{ width: '100%', padding: 10, border: '1px solid #ddd', borderRadius: 6, fontSize: 16 }} />
               <button className="search-btn" onClick={handleSearch}
-                style={{ padding: 10, background: '#3498db', color: 'white', border: 'none', borderRadius: 6, fontSize: 16, cursor: 'pointer' }}>
+                style={{ padding: 10, background: '#3498db', color: 'white', border: 'none', borderRadius: 6, fontSize: 16, cursor: 'pointer' }} >
                 搜索
               </button>
             </div>
@@ -95,8 +133,8 @@ const Home = () => {
         <h2 className="card-title" style={{ fontSize: 18, marginBottom: 15, color: '#2c3e50' }}>错题列表</h2>
         {fetchError && <p>{fetchError}</p>}
         <div className="question-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
-          {questions && questions.length > 0 ? (
-            questions.map((q, idx) => (
+          {filteredQuestions && filteredQuestions.length > 0 ? (
+            filteredQuestions.map((q, idx) => (
               <div className="question-card" key={q.id || idx} style={{ border: '1px solid #eee', borderRadius: 6, padding: 15, background: 'white' }}>
                 <span className="subject-tag" style={{ display: 'inline-block', padding: '3px 10px', background: '#e3f2fd', color: '#3498db', borderRadius: 20, fontSize: 14, marginBottom: 10 }}>
                   {{
@@ -134,9 +172,10 @@ const Home = () => {
                     <img
                       src={q.imageurl}
                       alt="题目图片"
-                      style={{ maxWidth: '100%', maxHeight: 220, borderRadius: 6, border: '1px solid #eee', display: 'block', margin: '0 auto' }}
+                      style={{ maxWidth: '100%', maxHeight: 220, borderRadius: 6, border: '1px solid #eee', display: 'block', marginLeft: 0 }}
                     />
                   </div>
+
                 )}
                 <div className="answer" style={{ fontSize: 15, marginBottom: 8, color: '#666' }}>
                   <span style={{ fontWeight: 'bold', color: '#27ae60' }}>正确答案：</span>
@@ -147,7 +186,7 @@ const Home = () => {
                   {q.eanswer || '无'}
                 </div>
                 <div className="answer" style={{ fontSize: 15, marginBottom: 8, color: '#666' }}>
-                  <span style={{ fontWeight: 'bold', color: '#e67e22' }}>错误分析：</span>
+                  <span style={{ fontWeight: 'bold', color: '#2dbbceff' }}>错误分析：</span>
                   {q.analysis || '无'}
                 </div>
                 <div className="meta" style={{ fontSize: 14, color: '#999', marginTop: 10 }}>

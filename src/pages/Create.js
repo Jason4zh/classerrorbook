@@ -61,7 +61,7 @@ const Upload = () => {
         setFormError('图片上传失败，请重试')
         return
       }
-      imgUrl = uploadData?.path
+      imgUrl = "https://hqzemultusietooosnxt.supabase.co/storage/v1/object/public/questionimg/"+uploadData?.path
     }
 
     // 插入数据库
