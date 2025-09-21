@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import supabase from "../config/supabaseClient"
 import { Link } from "react-router-dom"
 
+
 const Upload = () => {
   const navigate = useNavigate()
 
@@ -182,7 +183,7 @@ const Upload = () => {
               display: 'block',
               color: '#34495e'
             }}>错题题干 <span style={{ color: "#e74c3c" }}>*</span></label>
-            <input id="questionContent" className="form-control" placeholder="请完整输入错题题干" required value={questionContent} onChange={e => setQuestionContent(e.target.value)}
+            <textarea id="questionContent" className="form-control" placeholder="请完整输入错题题干" required value={questionContent} onChange={e => setQuestionContent(e.target.value)}
               style={{
                 width: '100%',
                 padding: '12px 14px',
@@ -202,7 +203,7 @@ const Upload = () => {
               display: 'block',
               color: '#34495e'
             }}>你的错误答案 <span style={{ color: "#e74c3c" }}>*</span></label>
-            <input id="wrongAnswer" className="form-control" placeholder="输入你当时做错的答案" required value={wrongAnswer} onChange={e => setWrongAnswer(e.target.value)}
+            <textarea id="wrongAnswer" className="form-control" placeholder="输入你当时做错的答案" required value={wrongAnswer} onChange={e => setWrongAnswer(e.target.value)}
               style={{
                 width: '100%',
                 padding: '12px 14px',
@@ -220,7 +221,7 @@ const Upload = () => {
               display: 'block',
               color: '#34495e'
             }}>正确答案 <span style={{ color: "#e74c3c" }}>*</span></label>
-            <input id="correctAnswer" className="form-control" placeholder="输入该题的正确答案及简要解析" required value={correctAnswer} onChange={e => setCorrectAnswer(e.target.value)}
+            <textarea id="correctAnswer" className="form-control" placeholder="输入该题的正确答案及简要解析" required value={correctAnswer} onChange={e => setCorrectAnswer(e.target.value)}
               style={{
                 width: '100%',
                 padding: '12px 14px',
@@ -240,7 +241,7 @@ const Upload = () => {
               display: 'block',
               color: '#34495e'
             }}>错误分析（可选）</label>
-            <input id="analysis" className="form-control" placeholder="说明做错的原因，帮助同学避坑" value={analysis} onChange={e => setAnalysis(e.target.value)}
+            <textarea id="analysis" className="form-control" placeholder="说明做错的原因" value={analysis} onChange={e => setAnalysis(e.target.value)}
               style={{
                 width: '100%',
                 padding: '12px 14px',

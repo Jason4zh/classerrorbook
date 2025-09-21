@@ -1,18 +1,18 @@
 import supabase from '../config/supabaseClient'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import Viewer from 'react-viewer';
 
 const Home = () => {
-  // 这里获取来自supabase的数据
   const [fetchError, setFetchError] = useState(null)
   const [questions, setQuestions] = useState([])
-
-  // 筛选条件（暂不实现筛选功能，仅展示UI）
   const [subject, setSubject] = useState('')
   const [type, setType] = useState('')
   const [keyword, setKeyword] = useState('')
   const [filteredQuestions, setFilteredQuestions] = useState([])
-
+  const [viewerVisible, setViewerVisible] = useState(false);
+  const [currentImage, setCurrentImage] = useState('');
+  const [allImages, setAllImages] = useState([]);
 
   useEffect(() => {
     // 这里获取supabase数据
@@ -33,7 +33,6 @@ const Home = () => {
     fetchQuestions()
   }, [])
 
-  // 搜索按钮点击事件（仅做演示）
   const handleSearch = () => {
     // 这里只是演示，实际筛选功能未实现
     console.log(`筛选条件：${subject || '全部学科'}，${type || '全部题型'}，关键词：${keyword}`)
@@ -50,7 +49,7 @@ const Home = () => {
       let ranking = [];
       let tkeyword = keyword.split('');
       filtered.forEach(q => {
-        if(q.content.includes(keyword)) {
+        if (q.content.includes(keyword)) {
           score += 114514;
           return;
         }
@@ -70,10 +69,21 @@ const Home = () => {
       filtered = ranking.map(rank => {
         return questions.find(q => q.id === rank.id);
       }).filter(Boolean);
-    } 
+    }
 
     setFilteredQuestions(filtered)
   }
+
+  const handleImageClick = (imageUrl) => {
+    const currentImages = filteredQuestions
+      .filter(q => q.imageurl)
+      .map(q => ({ src: q.imageurl }));
+
+    const index = currentImages.findIndex(img => img.src === imageUrl);
+    setCurrentImage(index);
+    setAllImages(currentImages);
+    setViewerVisible(true);
+  };
 
   return (
     <div
@@ -268,8 +278,13 @@ const Home = () => {
                         borderRadius: 8,
                         border: '1.5px solid #e3eaf2',
                         display: 'block',
-                        marginLeft: 0
+                        marginLeft: 0,
+                        transition: 'transform 0.2s', // 新增
+                        cursor: 'pointer' // 新增
                       }}
+                      onClick={() => handleImageClick(q.imageurl)} // 新增
+                      onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'} // 新增
+                      onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'} // 新增
                     />
                   </div>
                 )}
@@ -295,7 +310,18 @@ const Home = () => {
           )}
         </div>
       </div>
+      <Viewer
+        visible={viewerVisible}
+        onClose={() => setViewerVisible(false)}
+        images={allImages}
+        currentIndex={currentImage}
+        zoomable={true}
+        rotatable={true}
+        scalable={true}
+        onMaskClick={() => setViewerVisible(false)}
+      />
     </div>
+
   )
 }
 
