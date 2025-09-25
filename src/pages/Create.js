@@ -17,10 +17,10 @@ const Upload = () => {
   const [questionImg, setQuestionImg] = useState(null)
   const [formError, setFormError] = useState(null)
 
-  const [userEmail, setUserEmail] = useState('')
+  const [username, setUserName] = useState('')
   useState(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      setUserEmail(user?.email || '')
+      setUserName(user?.displayName || '')
     })
   }, [])
 

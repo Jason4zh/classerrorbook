@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 
 const Login = () => {
   const [theemail, setEmail] = useState('')
+  const [theusername, setUsername] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const navigate = useNavigate()
@@ -13,8 +14,13 @@ const Login = () => {
     setLoading(true)
     setMessage('')
     const { error } = await supabase.auth.signInWithOtp({
-      email:theemail,
+      email: theemail,
     })
+    if (theusername) {
+      const { data, error1 } = await supabase.auth.updateUser({
+        data: { displayName: theusername },
+      })
+    }
     if (error) {
       setMessage('登录失败: ' + error.message)
     } else {
@@ -27,6 +33,13 @@ const Login = () => {
     <div style={{ maxWidth: 400, margin: '60px auto', background: '#fff', padding: 32, borderRadius: 8 }}>
       <h2 style={{ textAlign: 'center', marginBottom: 24 }}>邮箱验证码登录</h2>
       <form onSubmit={handleLogin}>
+        <input
+          type="text"
+          placeholder="请输入用户名（可不填）"
+          value={theusername}
+          onChange={e => setUsername(e.target.value)}
+          style={{ width: '100%', padding: 10, marginBottom: 16, borderRadius: 6, border: '1px solid #ccc' }}
+        />
         <input
           type="email"
           placeholder="请输入邮箱"
