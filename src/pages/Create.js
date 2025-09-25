@@ -17,11 +17,11 @@ const Upload = () => {
   const [questionImg, setQuestionImg] = useState(null)
   const [formError, setFormError] = useState(null)
 
-  const [username, setUserName] = useState('')
+  const [userName, setUserName] = useState('')
   useState(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUserName(user?.displayName || '')
-    })
+    supabase.auth.getUser().then(({data:{user}}) => {
+        setUserName(user?.displayName || '')
+})
   }, [])
 
   // 文件选择
@@ -77,7 +77,7 @@ const Upload = () => {
         canswer: correctAnswer,
         analysis,
         imageurl: imgUrl,
-        author: userEmail || '匿名'
+        author: userName || '匿名'
       }])
 
     if (error) {
