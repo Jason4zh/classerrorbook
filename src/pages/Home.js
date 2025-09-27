@@ -15,27 +15,27 @@ const Home = () => {
   const [allImages, setAllImages] = useState([]);
 
   useEffect(() => {
-    // 这里获取supabase数据
     const fetchQuestions = async () => {
+      console.log('fetchQuestions called');
       const { data, error } = await supabase
-        .from('question') // 你的表名，实际应为错题表
-        .select()
+        .from('question')
+        .select();
+      console.log('data:', data, 'error:', error);
       if (error) {
         setFetchError('Could not fetch the questions')
         setQuestions([])
       }
       if (data) {
         setQuestions(data)
+        setFilteredQuestions(data) // 默认显示全部
         setFetchError(null)
+        console.log(data)
       }
     }
-
     fetchQuestions()
   }, [])
 
   const handleSearch = () => {
-    // 这里只是演示，实际筛选功能未实现
-    console.log(`筛选条件：${subject || '全部学科'}，${type || '全部题型'}，关键词：${keyword}`)
     let filtered = questions;
 
     if (subject || type) {
