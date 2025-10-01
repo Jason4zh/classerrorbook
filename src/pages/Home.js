@@ -2,6 +2,8 @@ import supabase from '../config/supabaseClient'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Viewer from 'react-viewer';
+import { InlineMath, BlockMath } from 'react-katex';
+import 'katex/dist/katex.min.css';
 
 const Home = () => {
   const [fetchError, setFetchError] = useState(null)
@@ -14,11 +16,44 @@ const Home = () => {
   const [currentImage, setCurrentImage] = useState('');
   const [allImages, setAllImages] = useState([]);
 
+  // 处理LaTeX公式渲染
+  const renderLatex = (content) => {
+    if (!content) return null;
+    
+    // 处理块级公式（$$...$$）
+    const blockRegex = /\$\$(.*?)\$\$/g;
+    if (blockRegex.test(content)) {
+      const parts = content.split(blockRegex);
+      return parts.map((part, index) => 
+        index % 2 === 1 ? (
+          <BlockMath key={index} math={part} />
+        ) : (
+          // 处理行内公式（$...$）
+          part.split(/\$(.*?)\$/g).map((inlinePart, i) => 
+            i % 2 === 1 ? (
+              <InlineMath key={i} math={inlinePart} />
+            ) : (
+              inlinePart
+            )
+          )
+        )
+      );
+    }
+    
+    // 仅处理行内公式
+    return content.split(/\$(.*?)\$/g).map((part, index) => 
+      index % 2 === 1 ? (
+        <InlineMath key={index} math={part} />
+      ) : (
+        part
+      )
+    );
+  };
+
   useEffect(() => {
-    // 这里获取supabase数据
     const fetchQuestions = async () => {
       const { data, error } = await supabase
-        .from('question') // 你的表名，实际应为错题表
+        .from('question')
         .select()
       if (error) {
         setFetchError('Could not fetch the questions')
@@ -34,7 +69,6 @@ const Home = () => {
   }, [])
 
   const handleSearch = () => {
-    // 这里只是演示，实际筛选功能未实现
     console.log(`筛选条件：${subject || '全部学科'}，${type || '全部题型'}，关键词：${keyword}`)
     let filtered = questions;
 
@@ -74,14 +108,20 @@ const Home = () => {
     setFilteredQuestions(filtered)
   }
 
-  const handleImageClick = (imageUrl) => {
-    const currentImages = filteredQuestions
+  useEffect(() => {
+    setFilteredQuestions(questions);
+  }, [questions]);
+
+  const handleImageClick = (id, imageUrl) => {
+    console.log('Image clicked:', id, imageUrl);
+
+    const allImages = filteredQuestions
       .filter(q => q.imageurl)
       .map(q => ({ src: q.imageurl }));
-
-    const index = currentImages.findIndex(img => img.src === imageUrl);
-    setCurrentImage(index);
-    setAllImages(currentImages);
+      
+    setCurrentImage(imageUrl);
+    setAllImages(allImages);
+    console.log(allImages);
     setViewerVisible(true);
   };
 
@@ -265,11 +305,12 @@ const Home = () => {
                   {!['single', 'multiple', 'fill', 'essay'].includes(q.type) && (q.type || '未知题型')}
                 </span>
                 <div className="question" style={{ fontSize: 16, margin: '12px 0 10px 0', lineHeight: 1.7, color: '#34495e' }}>
-                  {q.content || '题干内容'}
+                  {renderLatex(q.content) || '题干内容'}
                 </div>
                 {q.imageurl && (
                   <div className="question-image" style={{ marginBottom: 10 }}>
                     <img
+                      id={q.id}
                       src={q.imageurl}
                       alt="题目图片"
                       style={{
@@ -279,26 +320,26 @@ const Home = () => {
                         border: '1.5px solid #e3eaf2',
                         display: 'block',
                         marginLeft: 0,
-                        transition: 'transform 0.2s', // 新增
-                        cursor: 'pointer' // 新增
+                        transition: 'transform 0.2s',
+                        cursor: 'pointer'
                       }}
-                      onClick={() => handleImageClick(q.imageurl)} // 新增
-                      onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'} // 新增
-                      onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'} // 新增
+                      onClick={() => handleImageClick(q.id, q.imageurl)}
+                      onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                      onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     />
                   </div>
                 )}
                 <div className="answer" style={{ fontSize: 15, marginBottom: 8, color: '#666' }}>
                   <span style={{ fontWeight: 'bold', color: '#27ae60' }}>正确答案：</span>
-                  {q.canswer || '无'}
+                  {renderLatex(q.canswer) || '无'}
                 </div>
                 <div className="answer" style={{ fontSize: 15, marginBottom: 8, color: '#666' }}>
                   <span style={{ fontWeight: 'bold', color: '#e67e22' }}>错误答案：</span>
-                  {q.eanswer || '无'}
+                  {renderLatex(q.eanswer) || '无'}
                 </div>
                 <div className="answer" style={{ fontSize: 15, marginBottom: 8, color: '#666' }}>
                   <span style={{ fontWeight: 'bold', color: '#2dbbceff' }}>错误分析：</span>
-                  {q.analysis || '无'}
+                  {renderLatex(q.analysis) || '无'}
                 </div>
                 <div className="meta" style={{ fontSize: 14, color: '#999', marginTop: 10 }}>
                   {q.created_at.slice(0, 19) || '未知日期'} | 提交人：{q.author || '匿名'}
@@ -314,7 +355,7 @@ const Home = () => {
         visible={viewerVisible}
         onClose={() => setViewerVisible(false)}
         images={allImages}
-        currentIndex={currentImage}
+        activeIndex={allImages.findIndex(img => img.src === currentImage)}
         zoomable={true}
         rotatable={true}
         scalable={true}

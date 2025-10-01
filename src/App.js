@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Link, useNavigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import supabase from "./config/supabaseClient"
-
 import Index from "./pages/Index"
 import Home from "./pages/Home"
 import Create from "./pages/Create"
@@ -10,19 +9,45 @@ import Login from "./pages/Login"
 
 function AppRoutes() {
   const [user, setUser] = useState(null)
+  const [username, setUsername] = useState("")
   const navigate = useNavigate()
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => setUser(user))
+    const getInitialUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      if (user) {
+        getUsername(user.id)
+      }
+    }
+    getInitialUser()
+
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
+      if (currentUser) {
+        getUsername(currentUser.id)
+      } else {
+        setUsername("")
+      }
     })
+
+
+    async function getUsername(userId) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", userId)
+        .single()
+      setUsername(data?.username || "未知用户")
+    }
     return () => listener?.subscription.unsubscribe()
   }, [])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     setUser(null)
+    setUsername("")
     navigate("/login")
   }
 
@@ -35,7 +60,7 @@ function AppRoutes() {
         <Link to="/create">上传错题</Link>
         {user ? (
           <>
-            <span style={{ marginLeft: 16, color: "white"}}>{user.email}</span>
+            <span style={{ marginLeft: 16, color: "white" }}>{username}</span>
             <button onClick={handleLogout} style={{ marginLeft: 10 }}>退出登录</button>
           </>
         ) : (

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import supabase from "../config/supabaseClient"
 import { Link } from "react-router-dom"
@@ -18,11 +18,27 @@ const Upload = () => {
   const [formError, setFormError] = useState(null)
 
   const [userName, setUserName] = useState('')
-  useState(() => {
-    supabase.auth.getUser().then(({data:{user}}) => {
-        setUserName(user?.displayName || '')
-})
-  }, [])
+  useEffect(() => {
+  const getUsername = async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData.user) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', userData.user.id)
+        .single();
+      if (data) {
+        setUserName(data.username);
+      } else {
+        setUserName('匿名');
+      }
+    } else {
+      setUserName('匿名');
+    }
+  };
+
+  getUsername();
+}, []);
 
   // 文件选择
   const handleFileChange = (e) => {
@@ -63,7 +79,7 @@ const Upload = () => {
         setFormError('图片上传失败，请重试')
         return
       }
-      imgUrl = "https://hqzemultusietooosnxt.supabase.co/storage/v1/object/public/questionimg/"+uploadData?.path
+      imgUrl = "https://hqzemultusietooosnxt.supabase.co/storage/v1/object/public/questionimg/" + uploadData?.path
     }
 
     // 插入数据库
