@@ -36,6 +36,7 @@ const Upload = () => {
       setUserName('匿名');
     }
   };
+  
 
   getUsername();
 }, []);

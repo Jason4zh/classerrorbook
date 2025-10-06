@@ -19,17 +19,17 @@ const Home = () => {
   // 处理LaTeX公式渲染
   const renderLatex = (content) => {
     if (!content) return null;
-    
+
     // 处理块级公式（$$...$$）
     const blockRegex = /\$\$(.*?)\$\$/g;
     if (blockRegex.test(content)) {
       const parts = content.split(blockRegex);
-      return parts.map((part, index) => 
+      return parts.map((part, index) =>
         index % 2 === 1 ? (
           <BlockMath key={index} math={part} />
         ) : (
           // 处理行内公式（$...$）
-          part.split(/\$(.*?)\$/g).map((inlinePart, i) => 
+          part.split(/\$(.*?)\$/g).map((inlinePart, i) =>
             i % 2 === 1 ? (
               <InlineMath key={i} math={inlinePart} />
             ) : (
@@ -39,9 +39,9 @@ const Home = () => {
         )
       );
     }
-    
+
     // 仅处理行内公式
-    return content.split(/\$(.*?)\$/g).map((part, index) => 
+    return content.split(/\$(.*?)\$/g).map((part, index) =>
       index % 2 === 1 ? (
         <InlineMath key={index} math={part} />
       ) : (
@@ -55,6 +55,7 @@ const Home = () => {
       const { data, error } = await supabase
         .from('question')
         .select()
+        .order('id', { ascending: true })
       if (error) {
         setFetchError('Could not fetch the questions')
         setQuestions([])
@@ -118,7 +119,7 @@ const Home = () => {
     const allImages = filteredQuestions
       .filter(q => q.imageurl)
       .map(q => ({ src: q.imageurl }));
-      
+
     setCurrentImage(imageUrl);
     setAllImages(allImages);
     console.log(allImages);
