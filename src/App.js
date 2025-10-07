@@ -53,18 +53,99 @@ function AppRoutes() {
 
   return (
     <>
-      <nav>
-        <h1>班级错题共享库</h1>
-        <Link to="/">首页</Link>
-        <Link to="/search">查找错题</Link>
-        <Link to="/create">上传错题</Link>
+      <nav
+        style={{
+          background: 'linear-gradient(90deg, #1976d2 60%, #42a5f5 100%)',
+          padding: '18px 32px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '18px',
+          borderRadius: '0 0 18px 18px',
+          boxShadow: '0 2px 12px rgba(25,118,210,0.08)'
+        }}
+      >
+        <h1 style={{
+          color: '#fff',
+          fontWeight: 700,
+          fontSize: 26,
+          letterSpacing: 2,
+          marginRight: 32,
+          textShadow: '0 2px 8px rgba(25,118,210,0.12)'
+        }}>班级错题共享库</h1>
+        <Link to="/" style={{
+          color: '#fff',
+          background: 'rgba(255,255,255,0.08)',
+          padding: '7px 18px',
+          borderRadius: 8,
+          fontSize: 16,
+          fontWeight: 500,
+          textDecoration: 'none',
+          marginRight: 6,
+          transition: 'background 0.2s'
+        }}>首页</Link>
+        <Link to="/search" style={{
+          color: '#fff',
+          background: 'rgba(255,255,255,0.08)',
+          padding: '7px 18px',
+          borderRadius: 8,
+          fontSize: 16,
+          fontWeight: 500,
+          textDecoration: 'none',
+          marginRight: 6,
+          transition: 'background 0.2s'
+        }}>查找错题</Link>
+        <Link to="/create" style={{
+          color: '#fff',
+          background: 'rgba(255,255,255,0.08)',
+          padding: '7px 18px',
+          borderRadius: 8,
+          fontSize: 16,
+          fontWeight: 500,
+          textDecoration: 'none',
+          marginRight: 6,
+          transition: 'background 0.2s'
+        }}>上传错题</Link>
         {user ? (
           <>
-            <span style={{ marginLeft: 16, color: "white" }}>{username}</span>
-            <button onClick={handleLogout} style={{ marginLeft: 10 }}>退出登录</button>
+            <span style={{
+              marginLeft: 16,
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: 16,
+              background: 'rgba(255,255,255,0.13)',
+              padding: '7px 16px',
+              borderRadius: 8,
+              letterSpacing: 1
+            }}>{username}</span>
+            <button
+              onClick={handleLogout}
+              style={{
+                marginLeft: 10,
+                background: 'linear-gradient(90deg, #e74c3c 60%, #f39c12 100%)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '7px 18px',
+                fontSize: 16,
+                fontWeight: 600,
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(231,76,60,0.10)',
+                transition: 'background 0.2s'
+              }}
+            >退出登录</button>
           </>
         ) : (
-          <Link to="/login" style={{ marginLeft: 16 }}>登录</Link>
+          <Link to="/login" style={{
+            marginLeft: 16,
+            color: '#fff',
+            background: 'linear-gradient(90deg, #27ae60 60%, #2ecc71 100%)',
+            padding: '7px 18px',
+            borderRadius: 8,
+            fontSize: 16,
+            fontWeight: 600,
+            textDecoration: 'none',
+            transition: 'background 0.2s'
+          }}>登录</Link>
         )}
       </nav>
       <Routes>

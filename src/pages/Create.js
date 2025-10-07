@@ -16,13 +16,14 @@ const Upload = () => {
   const [analysis, setAnalysis] = useState('')
   const [questionImg, setQuestionImg] = useState(null)
   const [formError, setFormError] = useState(null)
-
+  const [answerImg, setAnswerImg] = useState(null)
+  const [answerImgUrl, setAnswerImgUrl] = useState(null)
   const [userName, setUserName] = useState('')
   useEffect(() => {
   const getUsername = async () => {
     const { data: userData } = await supabase.auth.getUser();
     if (userData.user) {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('username')
         .eq('id', userData.user.id)
@@ -42,15 +43,24 @@ const Upload = () => {
 }, []);
 
   // 文件选择
-  const handleFileChange = (e) => {
+  const handleQuestionFileChange = (e) => {
     setQuestionImg(e.target.files[0])
+  }
+  const handleAnswerFileChange = (e) => {
+    setAnswerImg(e.target.files[0])
   }
 
   // 拖拽上传
-  const handleDrop = (e) => {
+  const handleQuestionDrop = (e) => {
     e.preventDefault()
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       setQuestionImg(e.dataTransfer.files[0])
+    }
+  }
+  const handleAnswerDrop = (e) => {
+    e.preventDefault()
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setAnswerImg(e.dataTransfer.files[0])
     }
   }
 
@@ -58,6 +68,10 @@ const Upload = () => {
   const handleDragOver = (e) => {
     e.preventDefault()
   }
+  const handleAnswerDragOver = (e) => {
+    e.preventDefault()
+  }
+
 
   // 表单提交
   const handleSubmit = async (e) => {
@@ -67,7 +81,6 @@ const Upload = () => {
       return
     }
 
-    // 上传图片到 Supabase Storage（如有图片）
     let imgUrl = null
     if (questionImg) {
       const fileExt = questionImg.name.split('.').pop()
@@ -82,9 +95,24 @@ const Upload = () => {
       }
       imgUrl = "https://hqzemultusietooosnxt.supabase.co/storage/v1/object/public/questionimg/" + uploadData?.path
     }
+    let answerImgUrl = null
+    if (answerImg) {
+      const fileExt = answerImg.name.split('.').pop()
+      const fileName = `${Date.now()}_answer.${fileExt}`
+      const { data: uploadData, error: uploadError } = await supabase
+        .storage
+        .from('answerimg')
+        .upload(fileName, answerImg)
+      if (uploadError) {
+        setFormError('正确答案图片上传失败，请重试')
+        return
+      }
+      answerImgUrl = "https://hqzemultusietooosnxt.supabase.co/storage/v1/object/public/answerimg/" + uploadData?.path
+      setAnswerImgUrl(answerImgUrl)
+    }
 
     // 插入数据库
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('question')
       .insert([{
         subject,
@@ -93,7 +121,8 @@ const Upload = () => {
         eanswer: wrongAnswer,
         canswer: correctAnswer,
         analysis,
-        imageurl: imgUrl,
+        qimageurl: imgUrl,
+        aimageurl: answerImgUrl,
         author: userName || '匿名'
       }])
 
@@ -252,6 +281,50 @@ const Upload = () => {
               }} />
           </div>
           <div className="form-group" style={{ marginBottom: 22 }}>
+            <label style={{
+              fontWeight: 500,
+              marginBottom: 7,
+              display: 'block',
+              color: '#34495e'
+            }}>上传正确答案照片（可选）</label>
+            <div
+              className="upload-area"
+              id="answerUploadArea"
+              onClick={() => document.getElementById('answerImg').click()}
+              onDrop={handleAnswerDrop}
+              onDragOver={handleAnswerDragOver}
+              style={{
+                border: '2px dashed #90caf9',
+                borderRadius: 10,
+                background: '#f1f8fe',
+                padding: '32px 0',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'border 0.2s, background 0.2s',
+                marginTop: 6,
+                color: '#1976d2',
+                fontSize: 17,
+                fontWeight: 500
+              }}
+            >
+              <div className="upload-text">
+                {answerImg ? answerImg.name : "点击或拖拽文件到此处上传（支持JPG/PNG格式）"}
+              </div>
+              <input
+                type="file"
+                id="answerImg"
+                accept="image/jpg,image/png"
+                style={{ display: "none" }}
+                onChange={handleAnswerFileChange}
+              />
+            </div>
+            {answerImgUrl && (
+              <div style={{ marginTop: 10 }}>
+                <img src={answerImgUrl} alt="正确答案图片" style={{ maxWidth: '100%', borderRadius: 8, border: '1.5px solid #e3eaf2' }} />
+              </div>
+            )}
+          </div>
+          <div className="form-group" style={{ marginBottom: 22 }}>
             <label htmlFor="analysis" style={{
               fontWeight: 500,
               marginBottom: 7,
@@ -282,7 +355,7 @@ const Upload = () => {
               className="upload-area"
               id="uploadArea"
               onClick={() => document.getElementById('questionImg').click()}
-              onDrop={handleDrop}
+              onDrop={handleQuestionDrop}
               onDragOver={handleDragOver}
               style={{
                 border: '2px dashed #90caf9',
@@ -306,7 +379,7 @@ const Upload = () => {
                 id="questionImg"
                 accept="image/jpg,image/png"
                 style={{ display: "none" }}
-                onChange={handleFileChange}
+                onChange={handleQuestionFileChange}
               />
             </div>
           </div>

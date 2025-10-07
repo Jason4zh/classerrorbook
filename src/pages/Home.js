@@ -333,6 +333,32 @@ const Home = () => {
                 <div className="answer" style={{ fontSize: 15, marginBottom: 8, color: '#666' }}>
                   <span style={{ fontWeight: 'bold', color: '#27ae60' }}>正确答案：</span>
                   {renderLatex(q.canswer) || '无'}
+                  {/* 正确答案图片预览 */}
+                  {q.answerimgurl && (
+                    <div style={{ marginTop: 8 }}>
+                      <img
+                        src={q.answerimgurl}
+                        alt="正确答案图片"
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: 180,
+                          borderRadius: 8,
+                          border: '1.5px solid #e3eaf2',
+                          display: 'block',
+                          marginLeft: 0,
+                          transition: 'transform 0.2s',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => {
+                          setCurrentImage(q.answerimgurl);
+                          setAllImages([{ src: q.answerimgurl }]);
+                          setViewerVisible(true);
+                        }}
+                        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.03)'}
+                        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="answer" style={{ fontSize: 15, marginBottom: 8, color: '#666' }}>
                   <span style={{ fontWeight: 'bold', color: '#e67e22' }}>错误答案：</span>
