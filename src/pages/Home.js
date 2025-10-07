@@ -130,9 +130,9 @@ const Home = () => {
     <div
       className="container"
       style={{
-        maxWidth: 900,
+        maxWidth: '100%',
         margin: '0 auto',
-        padding: '32px 12px 60px 12px',
+        padding: '32px 20px 60px',
         background: '#f7f9fb',
         minHeight: '100vh'
       }}
