@@ -5,7 +5,6 @@ const Update = () => {
 
   const containerStyle = {
     height: 'calc(100vh - 125.6px)',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -17,24 +16,6 @@ const Update = () => {
     margin: '0 auto',
     borderRadius: '20px'
   };
-
-  // 添加背景动画元素
-  const backgroundElements = Array.from({ length: 5 }, (_, i) => (
-    <div
-      key={i}
-      style={{
-        position: 'absolute',
-        width: `${Math.random() * 100 + 50}px`,
-        height: `${Math.random() * 100 + 50}px`,
-        background: `radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)`,
-        borderRadius: '50%',
-        top: `${Math.random() * 100}%`,
-        left: `${Math.random() * 100}%`,
-        animation: `float ${Math.random() * 20 + 10}s infinite ease-in-out`,
-        animationDelay: `${Math.random() * 5}s`
-      }}
-    />
-  ));
 
   const contentStyle = {
     background: 'rgba(255, 255, 255, 0.95)',
@@ -163,18 +144,75 @@ const Update = () => {
       0% { transform: translateX(-100%) rotate(45deg); }
       100% { transform: translateX(100%) rotate(45deg); }
     }
+    
+    /* 手机端适配 */
+    @media (max-width: 768px) {
+      .page.update {
+        height: calc(100vh - 80px) !important;
+        padding: 15px !important;
+        border-radius: 0 !important;
+      }
+      
+      .page.update > div {
+        padding: 25px 20px !important;
+        margin: 0 10px !important;
+      }
+      
+      .page.update h2 {
+        font-size: 1.8rem !important;
+        margin-bottom: 20px !important;
+      }
+      
+      .page.update .text-content p {
+        font-size: 1rem !important;
+        line-height: 1.6 !important;
+        margin-bottom: 12px !important;
+      }
+      
+      .page.update .start-prompt {
+        padding: 15px 20px !important;
+        font-size: 1.2rem !important;
+        margin: 20px 0 !important;
+      }
+      
+      .page.update .feedback-link {
+        padding: 10px 20px !important;
+        font-size: 0.95rem !important;
+      }
+      
+      .page.update .signature {
+        font-size: 0.8rem !important;
+        margin-top: 20px !important;
+      }
+    }
+    
+    /* 超小屏幕适配 */
+    @media (max-width: 480px) {
+      .page.update > div {
+        padding: 20px 15px !important;
+      }
+      
+      .page.update h2 {
+        font-size: 1.6rem !important;
+      }
+      
+      .page.update .start-prompt {
+        font-size: 1.1rem !important;
+        padding: 12px 15px !important;
+      }
+    }
   `;
 
   return (
     <div className="page update" style={containerStyle}>
       <style>{styleSheet}</style>
-      {backgroundElements}
 
       <div style={contentStyle}>
         <h2 style={titleStyle}>🚀 网站更新公告</h2>
 
         {/* 新增的开始提示 */}
         <div
+          className="start-prompt"
           style={startPromptStyle}
           onMouseEnter={handleStartHover}
           onMouseLeave={handleStartHoverOut}
@@ -184,8 +222,8 @@ const Update = () => {
           <div style={startPromptBeforeStyle}></div>
         </div>
 
-        <div style={textStyle}>
-          <p>✨ 本网站当前版本：1.1.2fix-2</p>
+        <div className="text-content" style={textStyle}>
+          <p>✨ 本网站当前版本：1.1.3fix-1</p>
           <p>🎯 新功能正在陆续添加中，敬请期待~</p>
           <p>🔮 前面的区域以后再来探索吧~</p>
         </div>
@@ -198,6 +236,7 @@ const Update = () => {
           href="https://github.com/Jason4zh/classerrorbook/issues"
           target="_blank"
           rel="noopener noreferrer"
+          className="feedback-link"
           style={linkStyle}
           onMouseEnter={handleHover}
           onMouseLeave={handleHoverOut}
@@ -209,7 +248,7 @@ const Update = () => {
           点击 New Issues 提交你的反馈。感谢你的支持！
         </p>
 
-        <div style={signatureStyle}>
+        <div className="signature" style={signatureStyle}>
           by Jason4zh • 15322313759@163.com
         </div>
       </div>

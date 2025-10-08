@@ -19,28 +19,34 @@ const Upload = () => {
   const [answerImg, setAnswerImg] = useState(null)
   const [answerImgUrl, setAnswerImgUrl] = useState(null)
   const [userName, setUserName] = useState('')
+  
+  // 选择框悬停状态
+  const [subjectHover, setSubjectHover] = useState(false)
+  const [typeHover, setTypeHover] = useState(false)
+  const [subjectFocus, setSubjectFocus] = useState(false)
+  const [typeFocus, setTypeFocus] = useState(false)
+
   useEffect(() => {
-  const getUsername = async () => {
-    const { data: userData } = await supabase.auth.getUser();
-    if (userData.user) {
-      const { data } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', userData.user.id)
-        .single();
-      if (data) {
-        setUserName(data.username);
+    const getUsername = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData.user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', userData.user.id)
+          .single();
+        if (data) {
+          setUserName(data.username);
+        } else {
+          setUserName('匿名');
+        }
       } else {
         setUserName('匿名');
       }
-    } else {
-      setUserName('匿名');
-    }
-  };
-  
-
-  getUsername();
-}, []);
+    };
+    
+    getUsername();
+  }, []);
 
   // 文件选择
   const handleQuestionFileChange = (e) => {
@@ -71,7 +77,6 @@ const Upload = () => {
   const handleAnswerDragOver = (e) => {
     e.preventDefault()
   }
-
 
   // 表单提交
   const handleSubmit = async (e) => {
@@ -133,6 +138,41 @@ const Upload = () => {
     setFormError(null)
     navigate('/')
   }
+
+  // 选择框样式
+  const selectStyle = {
+    width: '100%',
+    padding: '14px 16px',
+    border: '2px solid #e3eaf2',
+    borderRadius: '12px',
+    fontSize: '16px',
+    background: '#fafdff',
+    marginTop: '6px',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    appearance: 'none',
+    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+    backgroundPosition: 'right 16px center',
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: '20px',
+    paddingRight: '48px'
+  }
+
+  const selectHoverStyle = {
+    ...selectStyle,
+    borderColor: '#3498db',
+    boxShadow: '0 0 0 3px rgba(52, 152, 219, 0.1)',
+    background: '#ffffff'
+  }
+
+  const selectFocusStyle = {
+    ...selectStyle,
+    borderColor: '#1976d2',
+    boxShadow: '0 0 0 3px rgba(25, 118, 210, 0.2)',
+    background: '#ffffff',
+    outline: 'none'
+  }
+
   return (
     <div
       className="container"
@@ -169,6 +209,7 @@ const Upload = () => {
           marginBottom: 18
         }}>填写错题信息</h2>
         <form id="questionForm" onSubmit={handleSubmit}>
+          {/* 学科选择框 */}
           <div className="form-group" style={{ marginBottom: 22 }}>
             <label htmlFor="subject" style={{
               fontWeight: 500,
@@ -176,17 +217,23 @@ const Upload = () => {
               display: 'block',
               color: '#34495e'
             }}>选择学科 <span style={{ color: "#e74c3c" }}>*</span></label>
-            <select id="subject" className="form-control" required value={subject} onChange={e => setSubject(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: '1.5px solid #e3eaf2',
-                borderRadius: 8,
-                fontSize: 16,
-                background: '#fafdff',
-                marginTop: 4
-              }}>
-              <option value="">-- 请选择学科 --</option>
+            <select 
+              id="subject" 
+              className="form-control" 
+              required 
+              value={subject} 
+              onChange={e => setSubject(e.target.value)}
+              onMouseEnter={() => setSubjectHover(true)}
+              onMouseLeave={() => setSubjectHover(false)}
+              onFocus={() => setSubjectFocus(true)}
+              onBlur={() => setSubjectFocus(false)}
+              style={
+                subjectFocus ? selectFocusStyle : 
+                subjectHover ? selectHoverStyle : 
+                selectStyle
+              }
+            >
+              <option value="">请选择学科</option>
               <option value="chinese">语文</option>
               <option value="math">数学</option>
               <option value="english">英语</option>
@@ -198,6 +245,8 @@ const Upload = () => {
               <option value="geography">地理</option>
             </select>
           </div>
+
+          {/* 题型选择框 */}
           <div className="form-group" style={{ marginBottom: 22 }}>
             <label htmlFor="questionType" style={{
               fontWeight: 500,
@@ -205,23 +254,30 @@ const Upload = () => {
               display: 'block',
               color: '#34495e'
             }}>选择题型 <span style={{ color: "#e74c3c" }}>*</span></label>
-            <select id="questionType" className="form-control" required value={questionType} onChange={e => setQuestionType(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: '1.5px solid #e3eaf2',
-                borderRadius: 8,
-                fontSize: 16,
-                background: '#fafdff',
-                marginTop: 4
-              }}>
-              <option value="">-- 请选择题型 --</option>
+            <select 
+              id="questionType" 
+              className="form-control" 
+              required 
+              value={questionType} 
+              onChange={e => setQuestionType(e.target.value)}
+              onMouseEnter={() => setTypeHover(true)}
+              onMouseLeave={() => setTypeHover(false)}
+              onFocus={() => setTypeFocus(true)}
+              onBlur={() => setTypeFocus(false)}
+              style={
+                typeFocus ? selectFocusStyle : 
+                typeHover ? selectHoverStyle : 
+                selectStyle
+              }
+            >
+              <option value="">请选择题型</option>
               <option value="single">单选题</option>
               <option value="multiple">多选题</option>
               <option value="fill">填空题</option>
               <option value="essay">解答题</option>
             </select>
           </div>
+
           <div className="form-group" style={{ marginBottom: 22 }}>
             <label htmlFor="questionContent" style={{
               fontWeight: 500,
