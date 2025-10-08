@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/classerrorbook/static/css/main.a10fceeb.css",
-    "main.js": "/classerrorbook/static/js/main.fc49ed6c.js",
+    "main.js": "/classerrorbook/static/js/main.9ae54d03.js",
     "static/media/KaTeX_AMS-Regular.ttf": "/classerrorbook/static/media/KaTeX_AMS-Regular.853be92419a6c3766b9a.ttf",
     "static/media/KaTeX_Main-Regular.ttf": "/classerrorbook/static/media/KaTeX_Main-Regular.9eba1d77abcf2aa6e94e.ttf",
     "static/media/KaTeX_Main-Bold.ttf": "/classerrorbook/static/media/KaTeX_Main-Bold.8169508bf58f8bd92ad8.ttf",
@@ -64,10 +64,10 @@
     "static/media/KaTeX_Size3-Regular.woff2": "/classerrorbook/static/media/KaTeX_Size3-Regular.e1951519f6f0596f7356.woff2",
     "index.html": "/classerrorbook/index.html",
     "main.a10fceeb.css.map": "/classerrorbook/static/css/main.a10fceeb.css.map",
-    "main.fc49ed6c.js.map": "/classerrorbook/static/js/main.fc49ed6c.js.map"
+    "main.9ae54d03.js.map": "/classerrorbook/static/js/main.9ae54d03.js.map"
   },
   "entrypoints": [
     "static/css/main.a10fceeb.css",
-    "static/js/main.fc49ed6c.js"
+    "static/js/main.9ae54d03.js"
   ]
 }
