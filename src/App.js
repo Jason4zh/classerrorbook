@@ -10,6 +10,7 @@ import Login from "./pages/Login"
 function AppRoutes() {
   const [user, setUser] = useState(null)
   const [username, setUsername] = useState("")
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -38,10 +39,14 @@ function AppRoutes() {
         .select("username")
         .eq("id", userId)
         .single()
-      setUsername(data?.username || "匿名用户")
+      setUsername(data?.username || "暂无名称")
     }
     return () => listener?.subscription.unsubscribe()
-  }, [])
+  }, [refreshTrigger])
+
+  const refreshUser = () => {
+    setRefreshTrigger(prev => prev + 1)
+  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -54,7 +59,7 @@ function AppRoutes() {
     <>
       {/* 添加 CSS 动画 */}
       <style>
-      {`
+        {`
         @keyframes shimmer {
           0% { transform: translateX(-100%) rotate(45deg); }
           100% { transform: translateX(100%) rotate(45deg); }
@@ -144,14 +149,14 @@ function AppRoutes() {
               transition: 'all 0.3s ease',
               cursor: 'default'
             }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'translateY(-2px)';
-              e.target.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.5)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'translateY(0)';
-              e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.3)';
-            }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.3)';
+              }}
             >
               用户：{username}
               <div style={{
@@ -203,7 +208,7 @@ function AppRoutes() {
         <Route path="/" element={<Index />} />
         <Route path="/search" element={<Home />} />
         <Route path="/create" element={<Create />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<Login onLoginSuccess={refreshUser} />} />
         <Route path="/:id" element={<Update />} />
       </Routes>
     </>

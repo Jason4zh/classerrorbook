@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import supabase from '../config/supabaseClient'
 import { useNavigate } from 'react-router-dom'
 
-const Login = () => {
+const Login = ({ onLoginSuccess }) => {
   const [theemail, setEmail] = useState('')
   const [theusername, setUsername] = useState('')
   const [loading, setLoading] = useState(false)
@@ -18,6 +18,10 @@ const Login = () => {
     setMessage('')
     const { error } = await supabase.auth.signInWithOtp({
       email: theemail,
+      options: {
+        type: 'magiclink',
+        emailRedirectTo: window.location.origin
+      }
     })
     if (error) {
       setMessage('登录失败: ' + error.message)
@@ -41,10 +45,13 @@ const Login = () => {
     if (error) {
       setMessage('验证码错误或已过期，请重试。')
     } else {
-      const { data:data1, error} = await supabase.from('profiles').select().eq('email', theemail)
+      const { data: data1, error } = await supabase.from('profiles').select().eq('email', theemail)
       console.log(data1, error)
       if (data1.length > 0 && data1) {
         setMessage('登录成功，正在跳转...')
+        if (onLoginSuccess) {
+          onLoginSuccess()
+        }
         setTimeout(() => {
           navigate('/')
         }, 1200)
@@ -70,6 +77,9 @@ const Login = () => {
       return
     }
     setMessage('登录成功，正在跳转...')
+    if (onLoginSuccess) {
+      onLoginSuccess()
+    }
     setTimeout(() => {
       navigate('/')
     }, 1200)
