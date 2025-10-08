@@ -243,6 +243,45 @@ const Upload = () => {
               }} />
           </div>
           <div className="form-group" style={{ marginBottom: 22 }}>
+            <label style={{
+              fontWeight: 500,
+              marginBottom: 7,
+              display: 'block',
+              color: '#34495e'
+            }}>上传错题照片（可选）</label>
+            <div
+              className="upload-area"
+              id="uploadArea"
+              onClick={() => document.getElementById('questionImg').click()}
+              onDrop={handleQuestionDrop}
+              onDragOver={handleDragOver}
+              style={{
+                border: '2px dashed #90caf9',
+                borderRadius: 10,
+                background: '#f1f8fe',
+                padding: '32px 0',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'border 0.2s, background 0.2s',
+                marginTop: 6,
+                color: '#1976d2',
+                fontSize: 17,
+                fontWeight: 500
+              }}
+            >
+              <div className="upload-text">
+                {questionImg ? questionImg.name : "点击或拖拽文件到此处上传（支持JPG/PNG格式）"}
+              </div>
+              <input
+                type="file"
+                id="questionImg"
+                accept="image/jpg,image/png"
+                style={{ display: "none" }}
+                onChange={handleQuestionFileChange}
+              />
+            </div>
+          </div>
+          <div className="form-group" style={{ marginBottom: 22 }}>
             <label htmlFor="wrongAnswer" style={{
               fontWeight: 500,
               marginBottom: 7,
@@ -343,45 +382,6 @@ const Upload = () => {
                 minHeight: 50,
                 resize: 'vertical'
               }} />
-          </div>
-          <div className="form-group" style={{ marginBottom: 22 }}>
-            <label style={{
-              fontWeight: 500,
-              marginBottom: 7,
-              display: 'block',
-              color: '#34495e'
-            }}>上传错题照片（可选）</label>
-            <div
-              className="upload-area"
-              id="uploadArea"
-              onClick={() => document.getElementById('questionImg').click()}
-              onDrop={handleQuestionDrop}
-              onDragOver={handleDragOver}
-              style={{
-                border: '2px dashed #90caf9',
-                borderRadius: 10,
-                background: '#f1f8fe',
-                padding: '32px 0',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'border 0.2s, background 0.2s',
-                marginTop: 6,
-                color: '#1976d2',
-                fontSize: 17,
-                fontWeight: 500
-              }}
-            >
-              <div className="upload-text">
-                {questionImg ? questionImg.name : "点击或拖拽文件到此处上传（支持JPG/PNG格式）"}
-              </div>
-              <input
-                type="file"
-                id="questionImg"
-                accept="image/jpg,image/png"
-                style={{ display: "none" }}
-                onChange={handleQuestionFileChange}
-              />
-            </div>
           </div>
           <button type="submit" className="btn submit-btn" id="submitBtn"
             style={{

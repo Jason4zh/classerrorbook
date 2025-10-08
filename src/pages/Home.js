@@ -70,7 +70,6 @@ const Home = () => {
   }, [])
 
   const handleSearch = () => {
-    console.log(`筛选条件：${subject || '全部学科'}，${type || '全部题型'}，关键词：${keyword}`)
     let filtered = questions;
 
     if (subject || type) {
@@ -117,14 +116,16 @@ const Home = () => {
     console.log('Image clicked:', id, imageUrl);
 
     const allImages = filteredQuestions
-      .filter(q => q.imageurl)
-      .map(q => ({ src: q.imageurl }));
+      .filter(q => q.qimageurl)
+      .map(q => ({ src: q.qimageurl }));
 
     setCurrentImage(imageUrl);
     setAllImages(allImages);
     console.log(allImages);
     setViewerVisible(true);
   };
+
+  console.log(filteredQuestions);
 
   return (
     <div
@@ -308,11 +309,11 @@ const Home = () => {
                 <div className="question" style={{ fontSize: 16, margin: '12px 0 10px 0', lineHeight: 1.7, color: '#34495e' }}>
                   {renderLatex(q.content) || '题干内容'}
                 </div>
-                {q.imageurl && (
+                {q.qimageurl && (
                   <div className="question-image" style={{ marginBottom: 10 }}>
                     <img
                       id={q.id}
-                      src={q.imageurl}
+                      src={q.qimageurl}
                       alt="题目图片"
                       style={{
                         maxWidth: '100%',
@@ -324,7 +325,7 @@ const Home = () => {
                         transition: 'transform 0.2s',
                         cursor: 'pointer'
                       }}
-                      onClick={() => handleImageClick(q.id, q.imageurl)}
+                      onClick={() => handleImageClick(q.id, q.qimageurl)}
                       onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
                       onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     />
@@ -333,11 +334,10 @@ const Home = () => {
                 <div className="answer" style={{ fontSize: 15, marginBottom: 8, color: '#666' }}>
                   <span style={{ fontWeight: 'bold', color: '#27ae60' }}>正确答案：</span>
                   {renderLatex(q.canswer) || '无'}
-                  {/* 正确答案图片预览 */}
-                  {q.answerimgurl && (
+                  {q.aimageurl && (
                     <div style={{ marginTop: 8 }}>
                       <img
-                        src={q.answerimgurl}
+                        src={q.aimageurl}
                         alt="正确答案图片"
                         style={{
                           maxWidth: '100%',
@@ -350,8 +350,8 @@ const Home = () => {
                           cursor: 'pointer'
                         }}
                         onClick={() => {
-                          setCurrentImage(q.answerimgurl);
-                          setAllImages([{ src: q.answerimgurl }]);
+                          setCurrentImage(q.aimageurl);
+                          setAllImages([{ src: q.aimageurl }]);
                           setViewerVisible(true);
                         }}
                         onMouseOver={e => e.currentTarget.style.transform = 'scale(1.03)'}
