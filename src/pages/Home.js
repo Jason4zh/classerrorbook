@@ -70,43 +70,45 @@ const Home = () => {
   }, [])
 
   const handleSearch = () => {
-    let filtered = questions;
+    let filtered = [...questions];
 
+    // 先进行学科和题型筛选
     if (subject || type) {
-      filtered = questions.filter(q =>
+      filtered = filtered.filter(q =>
         (subject ? q.subject === subject : true) &&
         (type ? q.type === type : true)
-      )
-    }
-    if (keyword) {
-      let score = 0;
-      let ranking = [];
-      let tkeyword = keyword.split('');
-      filtered.forEach(q => {
-        if (q.content.includes(keyword)) {
-          score += 114514;
-          return;
-        }
-        let tcontent = q.content.split('');
-        for (var i = 0; i < tcontent.length; i++) {
-          for (var j = 0; j < tkeyword.length; j++) {
-            if (tcontent[i] === tkeyword[j]) {
-              score++;
-            }
-          }
-        }
-        ranking.push({ id: q.id, score: score });
-        score = 0;
-      })
-      ranking.sort((a, b) => b.score - a.score);
-      ranking = ranking.filter(r => r.score > 0);
-      filtered = ranking.map(rank => {
-        return questions.find(q => q.id === rank.id);
-      }).filter(Boolean);
+      );
     }
 
-    setFilteredQuestions(filtered)
-  }
+    if (keyword.trim()) {
+      const keywordStr = keyword.trim();
+      const ranked = filtered.map(q => {
+        let score = 0;
+        const content = q.content || '';
+        if (content.includes(keywordStr)) {
+          score += 114514;
+        }
+        const keywordParts = keywordStr.split(/\s+/);
+        keywordParts.forEach(part => {
+          if (content.includes(part)) {
+            score += 100;
+          }
+        });
+        const charScore = [...keywordStr].reduce((acc, char) => {
+          return acc + (content.includes(char) ? 1 : 0);
+        }, 0);
+        return { ...q, score: score + charScore };
+      });
+      filtered = ranked
+        .filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .map(item => {
+          const { score, ...rest } = item;
+          return rest;
+        });
+    }
+    setFilteredQuestions(filtered);
+  };
 
   useEffect(() => {
     setFilteredQuestions(questions);

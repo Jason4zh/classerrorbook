@@ -209,7 +209,6 @@ const Upload = () => {
           marginBottom: 18
         }}>填写错题信息</h2>
         <form id="questionForm" onSubmit={handleSubmit}>
-          {/* 学科选择框 */}
           <div className="form-group" style={{ marginBottom: 22 }}>
             <label htmlFor="subject" style={{
               fontWeight: 500,
