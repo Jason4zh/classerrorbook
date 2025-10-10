@@ -7,8 +7,7 @@ import { Link } from "react-router-dom"
 const Upload = () => {
   const navigate = useNavigate()
 
-  // 表单各字段 state
-  const [subject, setSubject] = useState('')
+  const [selectedSubjects, setSelectedSubjects] = useState([])
   const [questionType, setQuestionType] = useState('')
   const [questionContent, setQuestionContent] = useState('')
   const [wrongAnswer, setWrongAnswer] = useState('')
@@ -20,11 +19,20 @@ const Upload = () => {
   const [answerImgUrl, setAnswerImgUrl] = useState(null)
   const [userName, setUserName] = useState('')
   
-  // 选择框悬停状态
-  const [subjectHover, setSubjectHover] = useState(false)
   const [typeHover, setTypeHover] = useState(false)
-  const [subjectFocus, setSubjectFocus] = useState(false)
   const [typeFocus, setTypeFocus] = useState(false)
+
+  const subjects = [
+    { value: 'chinese', label: '语文' },
+    { value: 'math', label: '数学' },
+    { value: 'english', label: '英语' },
+    { value: 'physics', label: '物理' },
+    { value: 'chemistry', label: '化学' },
+    { value: 'politics', label: '政治' },
+    { value: 'history', label: '历史' },
+    { value: 'biology', label: '生物' },
+    { value: 'geography', label: '地理' }
+  ]
 
   useEffect(() => {
     const getUsername = async () => {
@@ -48,7 +56,14 @@ const Upload = () => {
     getUsername();
   }, []);
 
-  // 文件选择
+  const handleSubjectChange = (subjectValue) => {
+    setSelectedSubjects(prev => 
+      prev.includes(subjectValue)
+        ? prev.filter(s => s !== subjectValue)
+        : [...prev, subjectValue]
+    )
+  }
+
   const handleQuestionFileChange = (e) => {
     setQuestionImg(e.target.files[0])
   }
@@ -56,7 +71,6 @@ const Upload = () => {
     setAnswerImg(e.target.files[0])
   }
 
-  // 拖拽上传
   const handleQuestionDrop = (e) => {
     e.preventDefault()
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
@@ -70,7 +84,6 @@ const Upload = () => {
     }
   }
 
-  // 防止默认拖拽行为
   const handleDragOver = (e) => {
     e.preventDefault()
   }
@@ -78,10 +91,10 @@ const Upload = () => {
     e.preventDefault()
   }
 
-  // 表单提交
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!subject || !questionType || !questionContent || !wrongAnswer || !correctAnswer) {
+    console.log(selectedSubjects)
+    if (selectedSubjects.length === 0 || !questionType || !questionContent || !correctAnswer) {
       setFormError('请完整填写带 * 的必填项')
       return
     }
@@ -116,11 +129,10 @@ const Upload = () => {
       setAnswerImgUrl(answerImgUrl)
     }
 
-    // 插入数据库
     const { error } = await supabase
       .from('question')
       .insert([{
-        subject,
+        subject: selectedSubjects.join("&"),
         type: questionType,
         content: questionContent,
         eanswer: wrongAnswer,
@@ -128,7 +140,7 @@ const Upload = () => {
         analysis,
         qimageurl: imgUrl,
         aimageurl: answerImgUrl,
-        author: userName || '匿名'
+        author: userName,
       }])
 
     if (error) {
@@ -139,7 +151,6 @@ const Upload = () => {
     navigate('/')
   }
 
-  // 选择框样式
   const selectStyle = {
     width: '100%',
     padding: '14px 16px',
@@ -210,42 +221,52 @@ const Upload = () => {
         }}>填写错题信息</h2>
         <form id="questionForm" onSubmit={handleSubmit}>
           <div className="form-group" style={{ marginBottom: 22 }}>
-            <label htmlFor="subject" style={{
+            <label style={{
               fontWeight: 500,
-              marginBottom: 7,
+              marginBottom: 12,
               display: 'block',
               color: '#34495e'
             }}>选择学科 <span style={{ color: "#e74c3c" }}>*</span></label>
-            <select 
-              id="subject" 
-              className="form-control" 
-              required 
-              value={subject} 
-              onChange={e => setSubject(e.target.value)}
-              onMouseEnter={() => setSubjectHover(true)}
-              onMouseLeave={() => setSubjectHover(false)}
-              onFocus={() => setSubjectFocus(true)}
-              onBlur={() => setSubjectFocus(false)}
-              style={
-                subjectFocus ? selectFocusStyle : 
-                subjectHover ? selectHoverStyle : 
-                selectStyle
-              }
-            >
-              <option value="">请选择学科</option>
-              <option value="chinese">语文</option>
-              <option value="math">数学</option>
-              <option value="english">英语</option>
-              <option value="physics">物理</option>
-              <option value="chemistry">化学</option>
-              <option value="politics">政治</option>
-              <option value="history">历史</option>
-              <option value="biology">生物</option>
-              <option value="geography">地理</option>
-            </select>
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 12,
+              marginTop: 6
+            }}>
+              {subjects.map(subject => (
+                <label key={subject.value} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  border: `2px solid ${selectedSubjects.includes(subject.value) ? '#1976d2' : '#e3eaf2'}`,
+                  background: selectedSubjects.includes(subject.value) ? '#e3f2fd' : '#fafdff',
+                  transition: 'all 0.2s ease',
+                }}>
+                  <input
+                    type="checkbox"
+                    value={subject.value}
+                    checked={selectedSubjects.includes(subject.value)}
+                    onChange={() => handleSubjectChange(subject.value)}
+                    style={{
+                      marginRight: 8,
+                      width: 18,
+                      height: 18,
+                      accentColor: '#1976d2'
+                    }}
+                  />
+                  <span style={{
+                    fontSize: 16,
+                    color: selectedSubjects.includes(subject.value) ? '#1976d2' : '#34495e',
+                    fontWeight: selectedSubjects.includes(subject.value) ? 500 : 'normal'
+                  }}>
+                    {subject.label}
+                  </span>
+                </label>
+              ))}
+            </div>
           </div>
-
-          {/* 题型选择框 */}
           <div className="form-group" style={{ marginBottom: 22 }}>
             <label htmlFor="questionType" style={{
               fontWeight: 500,
@@ -276,7 +297,6 @@ const Upload = () => {
               <option value="essay">解答题</option>
             </select>
           </div>
-
           <div className="form-group" style={{ marginBottom: 22 }}>
             <label htmlFor="questionContent" style={{
               fontWeight: 500,
@@ -342,8 +362,8 @@ const Upload = () => {
               marginBottom: 7,
               display: 'block',
               color: '#34495e'
-            }}>你的错误答案 <span style={{ color: "#e74c3c" }}>*</span></label>
-            <textarea id="wrongAnswer" className="form-control" placeholder="输入你当时做错的答案" required value={wrongAnswer} onChange={e => setWrongAnswer(e.target.value)}
+            }}>错误答案（可选）</label>
+            <textarea id="wrongAnswer" className="form-control" placeholder="输入你当时做错的答案" value={wrongAnswer} onChange={e => setWrongAnswer(e.target.value)}
               style={{
                 width: '100%',
                 padding: '12px 14px',
