@@ -55,6 +55,7 @@ const Home = () => {
       const { data, error } = await supabase
         .from('question')
         .select()
+        .eq('deployed',true)
         .order('id', { ascending: true })
       if (error) {
         setFetchError('Could not fetch the questions')
