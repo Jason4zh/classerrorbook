@@ -18,7 +18,7 @@ const Upload = () => {
   const [answerImg, setAnswerImg] = useState(null)
   const [answerImgUrl, setAnswerImgUrl] = useState(null)
   const [userName, setUserName] = useState('')
-  
+  const [uploadSuccess, setUploadSuccess] = useState(false);
   const [typeHover, setTypeHover] = useState(false)
   const [typeFocus, setTypeFocus] = useState(false)
 
@@ -52,12 +52,12 @@ const Upload = () => {
         setUserName('匿名');
       }
     };
-    
+
     getUsername();
   }, []);
 
   const handleSubjectChange = (subjectValue) => {
-    setSelectedSubjects(prev => 
+    setSelectedSubjects(prev =>
       prev.includes(subjectValue)
         ? prev.filter(s => s !== subjectValue)
         : [...prev, subjectValue]
@@ -93,8 +93,7 @@ const Upload = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log(selectedSubjects)
-    if (selectedSubjects.length === 0 || !questionType || !questionContent || !correctAnswer) {
+    if (selectedSubjects.length === 0 || !questionType || !questionContent || !wrongAnswer || !correctAnswer) {
       setFormError('请完整填写带 * 的必填项')
       return
     }
@@ -129,7 +128,7 @@ const Upload = () => {
       setAnswerImgUrl(answerImgUrl)
     }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('question')
       .insert([{
         subject: selectedSubjects.join("&"),
@@ -140,16 +139,98 @@ const Upload = () => {
         analysis,
         qimageurl: imgUrl,
         aimageurl: answerImgUrl,
-        author: userName,
+        author: userName || '匿名'
       }])
+      .select()
 
     if (error) {
       setFormError('提交失败，请重试')
       return
     }
-    setFormError(null)
-    navigate('/')
+
+    const questionid = data[0].id;
+
+    try {
+      setFormError(null)
+      setUploadSuccess(true);
+      await reviewQuestion(questionid)
+      setTimeout(() => {
+        navigate('/');
+      }, 3000);
+    } catch (err) {
+      setFormError('提交成功，但审核过程出错')
+    }
+
+    setTimeout(() => {
+      navigate('/');
+    }, 3000);
+
   }
+
+  const reviewQuestion = async (questionId) => {
+    try {
+      const questionData = {
+        subject: selectedSubjects.join("&"),
+        type: questionType,
+        content: questionContent,
+        wrongAnswer: wrongAnswer,
+        correctAnswer: correctAnswer,
+        analysis: analysis,
+      };
+      const response = await fetch("https://api.siliconflow.cn/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer sk-iysspznbiomjccbkyrkzjcnorqyvuazhldmykzxzqrlcmrtl`
+        },
+        body: JSON.stringify({
+          model: "Qwen/Qwen3-8B",
+          messages: [
+            {
+              role: "system",
+              content: "请审核以下错题信息是否完整合规，重点检查是否包含敏感内容及学科匹配性，和其是否符合一个高中生的错题内容所应该有的，如若审核通过，则输出字符串'是'，否则输出字符串'不是'"
+            },
+            {
+              role: "user",
+              content: `请审核以下错题数据：${JSON.stringify(questionData, null, 2)}`
+            }
+          ],
+          enable_thinking: true,
+          temperature: 0.3,
+          max_tokens: 1024,
+          top_p: 0.9,
+          stream: false,
+          stop: ["###"]
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`API错误: ${errorData.error?.message || response.statusText}`);
+      }
+
+      const result = await response.json();
+      const processedResult = result.choices?.[0]?.message?.content || "";
+      const thinkingResult = result.choices?.[0]?.reasoning_message?.content || "";
+      const isDeployed = processedResult.trim() === '是';
+
+      const { error: insertError } = await supabase
+        .from('question')
+        .update({ deployed: isDeployed })
+        .eq('id', questionId)
+      if (insertError) {
+        throw new Error(`数据插入失败: ${insertError.message}`)
+      }
+
+      console.log(processedResult,thinkingResult);
+      return processedResult;
+
+    } catch (error) {
+      console.error("审核接口调用失败:", error);
+      setFormError("审核过程出错，请稍后重试");
+      throw error;
+    }
+  };
 
   const selectStyle = {
     width: '100%',
@@ -185,298 +266,334 @@ const Upload = () => {
   }
 
   return (
-    <div
-      className="container"
-      style={{
-        maxWidth: '100%',
-        margin: '0 auto',
-        padding: '32px 20px 60px',
+    uploadSuccess ? (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'column',
         background: '#f7f9fb',
-        minHeight: '100vh'
-      }}
-    >
-      <div className="nav" style={{ marginBottom: 20 }}>
-        <Link to='/' className="nav-link" style={{ color: '#3498db', textDecoration: 'none', fontSize: 16 }}>← 返回首页</Link>
-      </div>
-      <h1 className="page-title" style={{
-        fontSize: 32,
-        fontWeight: 700,
-        color: '#1976d2',
-        marginBottom: 28,
-        textAlign: 'center',
-        letterSpacing: 1
-      }}>上传错题</h1>
-      <div className="card" style={{
-        background: '#fff',
-        borderRadius: 16,
-        boxShadow: '0 4px 24px rgba(25, 118, 210, 0.07)',
-        padding: '32px 24px',
-        marginBottom: 32
+        padding: '20px'
       }}>
-        <h2 className="card-title" style={{
-          fontSize: 20,
-          fontWeight: 600,
-          color: '#1976d2',
-          marginBottom: 18
-        }}>填写错题信息</h2>
-        <form id="questionForm" onSubmit={handleSubmit}>
-          <div className="form-group" style={{ marginBottom: 22 }}>
-            <label style={{
-              fontWeight: 500,
-              marginBottom: 12,
-              display: 'block',
-              color: '#34495e'
-            }}>选择学科 <span style={{ color: "#e74c3c" }}>*</span></label>
-            <div style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 12,
-              marginTop: 6
-            }}>
-              {subjects.map(subject => (
-                <label key={subject.value} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                  padding: '8px 16px',
-                  borderRadius: 8,
-                  border: `2px solid ${selectedSubjects.includes(subject.value) ? '#1976d2' : '#e3eaf2'}`,
-                  background: selectedSubjects.includes(subject.value) ? '#e3f2fd' : '#fafdff',
-                  transition: 'all 0.2s ease',
-                }}>
-                  <input
-                    type="checkbox"
-                    value={subject.value}
-                    checked={selectedSubjects.includes(subject.value)}
-                    onChange={() => handleSubjectChange(subject.value)}
-                    style={{
-                      marginRight: 8,
-                      width: 18,
-                      height: 18,
-                      accentColor: '#1976d2'
-                    }}
-                  />
-                  <span style={{
-                    fontSize: 16,
-                    color: selectedSubjects.includes(subject.value) ? '#1976d2' : '#34495e',
-                    fontWeight: selectedSubjects.includes(subject.value) ? 500 : 'normal'
-                  }}>
-                    {subject.label}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-          <div className="form-group" style={{ marginBottom: 22 }}>
-            <label htmlFor="questionType" style={{
-              fontWeight: 500,
-              marginBottom: 7,
-              display: 'block',
-              color: '#34495e'
-            }}>选择题型 <span style={{ color: "#e74c3c" }}>*</span></label>
-            <select 
-              id="questionType" 
-              className="form-control" 
-              required 
-              value={questionType} 
-              onChange={e => setQuestionType(e.target.value)}
-              onMouseEnter={() => setTypeHover(true)}
-              onMouseLeave={() => setTypeHover(false)}
-              onFocus={() => setTypeFocus(true)}
-              onBlur={() => setTypeFocus(false)}
-              style={
-                typeFocus ? selectFocusStyle : 
-                typeHover ? selectHoverStyle : 
-                selectStyle
-              }
-            >
-              <option value="">请选择题型</option>
-              <option value="single">单选题</option>
-              <option value="multiple">多选题</option>
-              <option value="fill">填空题</option>
-              <option value="essay">解答题</option>
-            </select>
-          </div>
-          <div className="form-group" style={{ marginBottom: 22 }}>
-            <label htmlFor="questionContent" style={{
-              fontWeight: 500,
-              marginBottom: 7,
-              display: 'block',
-              color: '#34495e'
-            }}>错题题干 <span style={{ color: "#e74c3c" }}>*</span></label>
-            <textarea id="questionContent" className="form-control" placeholder="请完整输入错题题干" required value={questionContent} onChange={e => setQuestionContent(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: '1.5px solid #e3eaf2',
-                borderRadius: 8,
-                fontSize: 16,
-                background: '#fafdff',
-                marginTop: 4,
-                minHeight: 70,
-                resize: 'vertical'
-              }} />
-          </div>
-          <div className="form-group" style={{ marginBottom: 22 }}>
-            <label style={{
-              fontWeight: 500,
-              marginBottom: 7,
-              display: 'block',
-              color: '#34495e'
-            }}>上传错题照片（可选）</label>
-            <div
-              className="upload-area"
-              id="uploadArea"
-              onClick={() => document.getElementById('questionImg').click()}
-              onDrop={handleQuestionDrop}
-              onDragOver={handleDragOver}
-              style={{
-                border: '2px dashed #90caf9',
-                borderRadius: 10,
-                background: '#f1f8fe',
-                padding: '32px 0',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'border 0.2s, background 0.2s',
-                marginTop: 6,
-                color: '#1976d2',
-                fontSize: 17,
-                fontWeight: 500
-              }}
-            >
-              <div className="upload-text">
-                {questionImg ? questionImg.name : "点击或拖拽文件到此处上传（支持JPG/PNG格式）"}
-              </div>
-              <input
-                type="file"
-                id="questionImg"
-                accept="image/jpg,image/png"
-                style={{ display: "none" }}
-                onChange={handleQuestionFileChange}
-              />
-            </div>
-          </div>
-          <div className="form-group" style={{ marginBottom: 22 }}>
-            <label htmlFor="wrongAnswer" style={{
-              fontWeight: 500,
-              marginBottom: 7,
-              display: 'block',
-              color: '#34495e'
-            }}>错误答案（可选）</label>
-            <textarea id="wrongAnswer" className="form-control" placeholder="输入你当时做错的答案" value={wrongAnswer} onChange={e => setWrongAnswer(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: '1.5px solid #e3eaf2',
-                borderRadius: 8,
-                fontSize: 16,
-                background: '#fafdff',
-                marginTop: 4
-              }} />
-          </div>
-          <div className="form-group" style={{ marginBottom: 22 }}>
-            <label htmlFor="correctAnswer" style={{
-              fontWeight: 500,
-              marginBottom: 7,
-              display: 'block',
-              color: '#34495e'
-            }}>正确答案 <span style={{ color: "#e74c3c" }}>*</span></label>
-            <textarea id="correctAnswer" className="form-control" placeholder="输入该题的正确答案及简要解析" required value={correctAnswer} onChange={e => setCorrectAnswer(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: '1.5px solid #e3eaf2',
-                borderRadius: 8,
-                fontSize: 16,
-                background: '#fafdff',
-                marginTop: 4,
-                minHeight: 50,
-                resize: 'vertical'
-              }} />
-          </div>
-          <div className="form-group" style={{ marginBottom: 22 }}>
-            <label style={{
-              fontWeight: 500,
-              marginBottom: 7,
-              display: 'block',
-              color: '#34495e'
-            }}>上传正确答案照片（可选）</label>
-            <div
-              className="upload-area"
-              id="answerUploadArea"
-              onClick={() => document.getElementById('answerImg').click()}
-              onDrop={handleAnswerDrop}
-              onDragOver={handleAnswerDragOver}
-              style={{
-                border: '2px dashed #90caf9',
-                borderRadius: 10,
-                background: '#f1f8fe',
-                padding: '32px 0',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'border 0.2s, background 0.2s',
-                marginTop: 6,
-                color: '#1976d2',
-                fontSize: 17,
-                fontWeight: 500
-              }}
-            >
-              <div className="upload-text">
-                {answerImg ? answerImg.name : "点击或拖拽文件到此处上传（支持JPG/PNG格式）"}
-              </div>
-              <input
-                type="file"
-                id="answerImg"
-                accept="image/jpg,image/png"
-                style={{ display: "none" }}
-                onChange={handleAnswerFileChange}
-              />
-            </div>
-            {answerImgUrl && (
-              <div style={{ marginTop: 10 }}>
-                <img src={answerImgUrl} alt="正确答案图片" style={{ maxWidth: '100%', borderRadius: 8, border: '1.5px solid #e3eaf2' }} />
-              </div>
-            )}
-          </div>
-          <div className="form-group" style={{ marginBottom: 22 }}>
-            <label htmlFor="analysis" style={{
-              fontWeight: 500,
-              marginBottom: 7,
-              display: 'block',
-              color: '#34495e'
-            }}>错误分析（可选）</label>
-            <textarea id="analysis" className="form-control" placeholder="说明做错的原因" value={analysis} onChange={e => setAnalysis(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: '1.5px solid #e3eaf2',
-                borderRadius: 8,
-                fontSize: 16,
-                background: '#fafdff',
-                marginTop: 4,
-                minHeight: 50,
-                resize: 'vertical'
-              }} />
-          </div>
-          <button type="submit" className="btn submit-btn" id="submitBtn"
-            style={{
-              background: 'linear-gradient(90deg, #1976d2 60%, #42a5f5 100%)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 8,
-              padding: '12px 28px',
-              fontSize: 18,
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'background 0.2s, box-shadow 0.2s',
-              boxShadow: '0 2px 8px rgba(25, 118, 210, 0.08)',
-              marginTop: 8
-            }}
-          >确认提交错题</button>
-          {formError && <p className="error" style={{ color: "#e74c3c", marginTop: "10px", fontSize: 16 }}>{formError}</p>}
-        </form>
+        <div style={{
+          textAlign: 'center',
+          maxWidth: '500px',
+          padding: '40px',
+          background: '#fff',
+          borderRadius: '16px',
+          boxShadow: '0 4px 24px rgba(25, 118, 210, 0.1)'
+        }}>
+          <div style={{
+            fontSize: '48px',
+            color: '#2ecc71',
+            marginBottom: '20px'
+          }}>✓</div>
+          <p style={{
+            color: '#2c3e50',
+            fontSize: '20px',
+            lineHeight: '1.6',
+            fontWeight: 500
+          }}>
+            上传成功，正在等待审核
+          </p>
+        </div>
       </div>
-    </div>
+    ) : (
+      <div
+        className="container"
+        style={{
+          maxWidth: '100%',
+          margin: '0 auto',
+          padding: '32px 20px 60px',
+          background: '#f7f9fb',
+          minHeight: '100vh'
+        }}
+      >
+        <div className="nav" style={{ marginBottom: 20 }}>
+          <Link to='/' className="nav-link" style={{ color: '#3498db', textDecoration: 'none', fontSize: 16 }}>← 返回首页</Link>
+        </div>
+        <h1 className="page-title" style={{
+          fontSize: 32,
+          fontWeight: 700,
+          color: '#1976d2',
+          marginBottom: 28,
+          textAlign: 'center',
+          letterSpacing: 1
+        }}>上传错题</h1>
+        <div className="card" style={{
+          background: '#fff',
+          borderRadius: 16,
+          boxShadow: '0 4px 24px rgba(25, 118, 210, 0.07)',
+          padding: '32px 24px',
+          marginBottom: 32
+        }}>
+          <h2 className="card-title" style={{
+            fontSize: 20,
+            fontWeight: 600,
+            color: '#1976d2',
+            marginBottom: 18
+          }}>填写错题信息</h2>
+          <form id="questionForm" onSubmit={handleSubmit}>
+            <div className="form-group" style={{ marginBottom: 22 }}>
+              <label style={{
+                fontWeight: 500,
+                marginBottom: 12,
+                display: 'block',
+                color: '#34495e'
+              }}>选择学科 <span style={{ color: "#e74c3c" }}>*</span></label>
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 12,
+                marginTop: 6
+              }}>
+                {subjects.map(subject => (
+                  <label key={subject.value} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    border: `2px solid ${selectedSubjects.includes(subject.value) ? '#1976d2' : '#e3eaf2'}`,
+                    background: selectedSubjects.includes(subject.value) ? '#e3f2fd' : '#fafdff',
+                    transition: 'all 0.2s ease',
+                  }}>
+                    <input
+                      type="checkbox"
+                      value={subject.value}
+                      checked={selectedSubjects.includes(subject.value)}
+                      onChange={() => handleSubjectChange(subject.value)}
+                      style={{
+                        marginRight: 8,
+                        width: 18,
+                        height: 18,
+                        accentColor: '#1976d2'
+                      }}
+                    />
+                    <span style={{
+                      fontSize: 16,
+                      color: selectedSubjects.includes(subject.value) ? '#1976d2' : '#34495e',
+                      fontWeight: selectedSubjects.includes(subject.value) ? 500 : 'normal'
+                    }}>
+                      {subject.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="form-group" style={{ marginBottom: 22 }}>
+              <label htmlFor="questionType" style={{
+                fontWeight: 500,
+                marginBottom: 7,
+                display: 'block',
+                color: '#34495e'
+              }}>选择题型 <span style={{ color: "#e74c3c" }}>*</span></label>
+              <select
+                id="questionType"
+                className="form-control"
+                required
+                value={questionType}
+                onChange={e => setQuestionType(e.target.value)}
+                onMouseEnter={() => setTypeHover(true)}
+                onMouseLeave={() => setTypeHover(false)}
+                onFocus={() => setTypeFocus(true)}
+                onBlur={() => setTypeFocus(false)}
+                style={
+                  typeFocus ? selectFocusStyle :
+                    typeHover ? selectHoverStyle :
+                      selectStyle
+                }
+              >
+                <option value="">请选择题型</option>
+                <option value="single">单选题</option>
+                <option value="multiple">多选题</option>
+                <option value="fill">填空题</option>
+                <option value="essay">解答题</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ marginBottom: 22 }}>
+              <label htmlFor="questionContent" style={{
+                fontWeight: 500,
+                marginBottom: 7,
+                display: 'block',
+                color: '#34495e'
+              }}>错题题干 <span style={{ color: "#e74c3c" }}>*</span></label>
+              <textarea id="questionContent" className="form-control" placeholder="请完整输入错题题干" required value={questionContent} onChange={e => setQuestionContent(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  border: '1.5px solid #e3eaf2',
+                  borderRadius: 8,
+                  fontSize: 16,
+                  background: '#fafdff',
+                  marginTop: 4,
+                  minHeight: 70,
+                  resize: 'vertical'
+                }} />
+            </div>
+            <div className="form-group" style={{ marginBottom: 22 }}>
+              <label style={{
+                fontWeight: 500,
+                marginBottom: 7,
+                display: 'block',
+                color: '#34495e'
+              }}>上传错题照片（可选）</label>
+              <div
+                className="upload-area"
+                id="uploadArea"
+                onClick={() => document.getElementById('questionImg').click()}
+                onDrop={handleQuestionDrop}
+                onDragOver={handleDragOver}
+                style={{
+                  border: '2px dashed #90caf9',
+                  borderRadius: 10,
+                  background: '#f1f8fe',
+                  padding: '32px 0',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'border 0.2s, background 0.2s',
+                  marginTop: 6,
+                  color: '#1976d2',
+                  fontSize: 17,
+                  fontWeight: 500
+                }}
+              >
+                <div className="upload-text">
+                  {questionImg ? questionImg.name : "点击或拖拽文件到此处上传（支持JPG/PNG格式）"}
+                </div>
+                <input
+                  type="file"
+                  id="questionImg"
+                  accept="image/jpg,image/png"
+                  style={{ display: "none" }}
+                  onChange={handleQuestionFileChange}
+                />
+              </div>
+            </div>
+            <div className="form-group" style={{ marginBottom: 22 }}>
+              <label htmlFor="wrongAnswer" style={{
+                fontWeight: 500,
+                marginBottom: 7,
+                display: 'block',
+                color: '#34495e'
+              }}>你的错误答案 <span style={{ color: "#e74c3c" }}>*</span></label>
+              <textarea id="wrongAnswer" className="form-control" placeholder="输入你当时做错的答案" required value={wrongAnswer} onChange={e => setWrongAnswer(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  border: '1.5px solid #e3eaf2',
+                  borderRadius: 8,
+                  fontSize: 16,
+                  background: '#fafdff',
+                  marginTop: 4
+                }} />
+            </div>
+            <div className="form-group" style={{ marginBottom: 22 }}>
+              <label htmlFor="correctAnswer" style={{
+                fontWeight: 500,
+                marginBottom: 7,
+                display: 'block',
+                color: '#34495e'
+              }}>正确答案 <span style={{ color: "#e74c3c" }}>*</span></label>
+              <textarea id="correctAnswer" className="form-control" placeholder="输入该题的正确答案及简要解析" required value={correctAnswer} onChange={e => setCorrectAnswer(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  border: '1.5px solid #e3eaf2',
+                  borderRadius: 8,
+                  fontSize: 16,
+                  background: '#fafdff',
+                  marginTop: 4,
+                  minHeight: 50,
+                  resize: 'vertical'
+                }} />
+            </div>
+            <div className="form-group" style={{ marginBottom: 22 }}>
+              <label style={{
+                fontWeight: 500,
+                marginBottom: 7,
+                display: 'block',
+                color: '#34495e'
+              }}>上传正确答案照片（可选）</label>
+              <div
+                className="upload-area"
+                id="answerUploadArea"
+                onClick={() => document.getElementById('answerImg').click()}
+                onDrop={handleAnswerDrop}
+                onDragOver={handleAnswerDragOver}
+                style={{
+                  border: '2px dashed #90caf9',
+                  borderRadius: 10,
+                  background: '#f1f8fe',
+                  padding: '32px 0',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'border 0.2s, background 0.2s',
+                  marginTop: 6,
+                  color: '#1976d2',
+                  fontSize: 17,
+                  fontWeight: 500
+                }}
+              >
+                <div className="upload-text">
+                  {answerImg ? answerImg.name : "点击或拖拽文件到此处上传（支持JPG/PNG格式）"}
+                </div>
+                <input
+                  type="file"
+                  id="answerImg"
+                  accept="image/jpg,image/png"
+                  style={{ display: "none" }}
+                  onChange={handleAnswerFileChange}
+                />
+              </div>
+              {answerImgUrl && (
+                <div style={{ marginTop: 10 }}>
+                  <img src={answerImgUrl} alt="正确答案图片" style={{ maxWidth: '100%', borderRadius: 8, border: '1.5px solid #e3eaf2' }} />
+                </div>
+              )}
+            </div>
+            <div className="form-group" style={{ marginBottom: 22 }}>
+              <label htmlFor="analysis" style={{
+                fontWeight: 500,
+                marginBottom: 7,
+                display: 'block',
+                color: '#34495e'
+              }}>错误分析（可选）</label>
+              <textarea id="analysis" className="form-control" placeholder="说明做错的原因" value={analysis} onChange={e => setAnalysis(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  border: '1.5px solid #e3eaf2',
+                  borderRadius: 8,
+                  fontSize: 16,
+                  background: '#fafdff',
+                  marginTop: 4,
+                  minHeight: 50,
+                  resize: 'vertical'
+                }} />
+            </div>
+            <button type="submit" className="btn submit-btn" id="submitBtn"
+              style={{
+                background: 'linear-gradient(90deg, #1976d2 60%, #42a5f5 100%)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '12px 28px',
+                fontSize: 18,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'background 0.2s, box-shadow 0.2s',
+                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.08)',
+                marginTop: 8
+              }}
+            >确认提交错题</button>
+            {formError && <p className="error" style={{ color: "#e74c3c", marginTop: "10px", fontSize: 16 }}>{formError}</p>}
+
+          </form>
+        </div>
+      </div>
+    )
   )
 }
 

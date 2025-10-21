@@ -223,8 +223,7 @@ const Update = () => {
         </div>
 
         <div className="text-content" style={textStyle}>
-          <p>✨ 本网站当前版本：1.2.0fix-2</p>
-          <p>🆕 更新：学科复选框，上传者筛选</p>
+          <p>✨ 本网站当前版本：1.2.1</p>
           <p>🎯 新功能正在陆续添加中，敬请期待~</p>
           <p>🔮 前面的区域以后再来探索吧~</p>
         </div>

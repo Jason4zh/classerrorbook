@@ -10,16 +10,17 @@ const Home = () => {
   const [questions, setQuestions] = useState([])
   const [subject, setSubject] = useState('')
   const [type, setType] = useState('')
-  const [author, setAuthor] = useState('');
   const [keyword, setKeyword] = useState('')
   const [filteredQuestions, setFilteredQuestions] = useState([])
   const [viewerVisible, setViewerVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState('');
   const [allImages, setAllImages] = useState([]);
 
+  // 处理LaTeX公式渲染
   const renderLatex = (content) => {
     if (!content) return null;
 
+    // 处理块级公式（$$...$$）
     const blockRegex = /\$\$(.*?)\$\$/g;
     if (blockRegex.test(content)) {
       const parts = content.split(blockRegex);
@@ -27,6 +28,7 @@ const Home = () => {
         index % 2 === 1 ? (
           <BlockMath key={index} math={part} />
         ) : (
+          // 处理行内公式（$...$）
           part.split(/\$(.*?)\$/g).map((inlinePart, i) =>
             i % 2 === 1 ? (
               <InlineMath key={i} math={inlinePart} />
@@ -38,6 +40,7 @@ const Home = () => {
       );
     }
 
+    // 仅处理行内公式
     return content.split(/\$(.*?)\$/g).map((part, index) =>
       index % 2 === 1 ? (
         <InlineMath key={index} math={part} />
@@ -69,11 +72,11 @@ const Home = () => {
   const handleSearch = () => {
     let filtered = [...questions];
 
-    if (subject || type || author) {
+    // 先进行学科和题型筛选
+    if (subject || type) {
       filtered = filtered.filter(q =>
         (subject ? q.subject === subject : true) &&
-        (type ? q.type === type : true) &&
-        (author ? q.author === author : true)
+        (type ? q.type === type : true)
       );
     }
 
@@ -139,10 +142,12 @@ const Home = () => {
         wordBreak: 'break-all'
       }}
     >
+      {/* 导航 */}
       <div className="nav" style={{ marginBottom: 20 }}>
         <Link to='/' className="nav-link" style={{ color: '#3498db', textDecoration: 'none', fontSize: 16 }}>← 返回首页</Link>
       </div>
 
+      {/* 标题 */}
       <h1 className="title" style={{
         fontSize: 32,
         fontWeight: 700,
@@ -152,6 +157,7 @@ const Home = () => {
         letterSpacing: 1
       }}>查找错题</h1>
 
+      {/* 筛选卡片 */}
       <div className="card" style={{
         background: '#fff',
         borderRadius: 16,
@@ -209,7 +215,7 @@ const Home = () => {
           </div>
           <div className="filter-item" style={{ flex: 1, minWidth: 180 }}>
             <label style={{ display: 'block', marginBottom: 7, fontSize: 15, fontWeight: 500, color: '#34495e' }}>上传者</label>
-            <select className="input" value={author} onChange={e => setAuthor(e.target.value)} style={{
+            <select className="input" value={type} onChange={e => setType(e.target.value)} style={{
               width: '100%',
               padding: '12px 14px',
               border: '1.5px solid #e3eaf2',
@@ -219,9 +225,7 @@ const Home = () => {
               marginTop: 4
             }}>
               <option value="">全部</option>
-              {Array.from(new Set(questions.map(q => q.author))).filter(author => author).map(author => (
-                <option key={author} value={author}>{author}</option>
-              ))}
+              
             </select>
           </div>
           <div className="search-item" style={{ flex: 2, minWidth: 250 }}>
@@ -258,6 +262,7 @@ const Home = () => {
         </div>
       </div>
 
+      {/* 错题展示卡片 */}
       <div className="card" style={{
         background: '#fff',
         borderRadius: 16,
@@ -410,6 +415,7 @@ const Home = () => {
         onMaskClick={() => setViewerVisible(false)}
       />
     </div>
+
   )
 }
 
