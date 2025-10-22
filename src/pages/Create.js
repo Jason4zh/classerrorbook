@@ -19,6 +19,8 @@ const Upload = () => {
   const [answerImgUrl, setAnswerImgUrl] = useState(null)
   const [userName, setUserName] = useState('')
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [DeploySuccess, setDeploySuccess] = useState(null);
+  const [reasoningContent, setReasoningContent] = useState(null)
   const [typeHover, setTypeHover] = useState(false)
   const [typeFocus, setTypeFocus] = useState(false)
 
@@ -154,16 +156,19 @@ const Upload = () => {
       setFormError(null)
       setUploadSuccess(true);
       await reviewQuestion(questionid)
-      setTimeout(() => {
-        navigate('/');
-      }, 3000);
+      if (DeploySuccess) {
+        setTimeout(() => {
+          navigate('/');
+        }, 3000);
+      }
+      else {
+        setTimeout(() => {
+          navigate('/');
+        }, 30000);
+      }
     } catch (err) {
       setFormError('提交成功，但审核过程出错')
     }
-
-    setTimeout(() => {
-      navigate('/');
-    }, 3000);
 
   }
 
@@ -211,8 +216,10 @@ const Upload = () => {
 
       const result = await response.json();
       const processedResult = result.choices?.[0]?.message?.content || "";
-      const thinkingResult = result.choices?.[0]?.reasoning_message?.content || "";
-      const isDeployed = processedResult.trim() === '是';
+      const thinkingResult = result.choices?.[0]?.message?.reasoning_content || "";
+      const isDeployed = !processedResult.trim().includes("不是");
+      setDeploySuccess(isDeployed);
+      setReasoningContent(thinkingResult)
 
       const { error: insertError } = await supabase
         .from('question')
@@ -222,7 +229,7 @@ const Upload = () => {
         throw new Error(`数据插入失败: ${insertError.message}`)
       }
 
-      console.log(processedResult,thinkingResult);
+      console.log(processedResult, thinkingResult);
       return processedResult;
 
     } catch (error) {
@@ -284,19 +291,60 @@ const Upload = () => {
           borderRadius: '16px',
           boxShadow: '0 4px 24px rgba(25, 118, 210, 0.1)'
         }}>
-          <div style={{
-            fontSize: '48px',
-            color: '#2ecc71',
-            marginBottom: '20px'
-          }}>✓</div>
-          <p style={{
-            color: '#2c3e50',
-            fontSize: '20px',
-            lineHeight: '1.6',
-            fontWeight: 500
-          }}>
-            上传成功，正在等待审核
-          </p>
+          {typeof DeploySuccess === 'boolean' ? (
+            DeploySuccess ? (
+              <div>
+                <div style={{
+                  fontSize: '48px',
+                  color: '#2ecc71',
+                  marginBottom: '20px'
+                }}>✔</div>
+                <p style={{
+                  color: '#2c3e50',
+                  fontSize: '20px',
+                  lineHeight: '1.6',
+                  fontWeight: 500
+                }}>
+                  审核已通过，请在“查找错题”查看，将在3s后返回首页...
+                </p>
+              </div>
+            ) : (
+              <div>
+                <div style={{
+                  fontSize: '48px',
+                  color: '#ff2323',
+                  marginBottom: '20px'
+                }}>✘</div>
+                <p style={{
+                  color: '#2c3e50',
+                  fontSize: '20px',
+                  lineHeight: '1.6',
+                  fontWeight: 500
+                }}>
+                  审核未通过，请尝试重新上传，失败理由：<br />
+                  {reasoningContent}<br />
+                  将在15s后返回首页...
+                </p>
+              </div>
+            )
+          ) : (
+            <div>
+              <div style={{
+                fontSize: '100px',
+                color: '#4039a3',
+                marginBottom: '20px',
+                animation: 'spin 1.5s linear infinite'
+              }}>↻</div>
+              <p style={{
+                color: '#2c3e50',
+                fontSize: '20px',
+                lineHeight: '1.6',
+                fontWeight: 500,
+              }}>
+                正在审核，请稍等
+              </p>
+            </div>
+          )}
         </div>
       </div>
     ) : (
@@ -592,6 +640,22 @@ const Upload = () => {
 
           </form>
         </div>
+        <style jsx global>{`
+          @keyframes spin {
+          0% { 
+            transform: rotate(0deg) scale(1);
+            opacity: 0.7;
+          }
+          50% { 
+            transform: rotate(180deg) scale(1.3);
+            opacity: 1;
+          }
+          100% { 
+            transform: rotate(360deg) scale(1);
+            opacity: 0.7;
+          }
+        }`}
+        </style>
       </div>
     )
   )
