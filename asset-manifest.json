@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/classerrorbook/static/css/main.a10fceeb.css",
-    "main.js": "/classerrorbook/static/js/main.12273d54.js",
+    "main.js": "/classerrorbook/static/js/main.2cad70cc.js",
     "static/media/KaTeX_AMS-Regular.ttf": "/classerrorbook/static/media/KaTeX_AMS-Regular.853be92419a6c3766b9a.ttf",
     "static/media/KaTeX_Main-Regular.ttf": "/classerrorbook/static/media/KaTeX_Main-Regular.9eba1d77abcf2aa6e94e.ttf",
     "static/media/KaTeX_Main-Bold.ttf": "/classerrorbook/static/media/KaTeX_Main-Bold.8169508bf58f8bd92ad8.ttf",
@@ -63,11 +63,12 @@
     "static/media/KaTeX_Size3-Regular.woff": "/classerrorbook/static/media/KaTeX_Size3-Regular.7947224e8a9914fa332b.woff",
     "static/media/KaTeX_Size3-Regular.woff2": "/classerrorbook/static/media/KaTeX_Size3-Regular.e1951519f6f0596f7356.woff2",
     "index.html": "/classerrorbook/index.html",
+    "static/media/arrow-clockwise.svg": "/classerrorbook/static/media/arrow-clockwise.2cb99c33a158704936e55c7e678f822d.svg",
     "main.a10fceeb.css.map": "/classerrorbook/static/css/main.a10fceeb.css.map",
-    "main.12273d54.js.map": "/classerrorbook/static/js/main.12273d54.js.map"
+    "main.2cad70cc.js.map": "/classerrorbook/static/js/main.2cad70cc.js.map"
   },
   "entrypoints": [
     "static/css/main.a10fceeb.css",
-    "static/js/main.12273d54.js"
+    "static/js/main.2cad70cc.js"
   ]
 }
