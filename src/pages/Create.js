@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import supabase from "../config/supabaseClient"
 import { Link } from "react-router-dom"
+import arrowClock from "../assets/arrow-clockwise.svg"
 
 
 const Upload = () => {
@@ -151,12 +152,15 @@ const Upload = () => {
     }
 
     const questionid = data[0].id;
+    console.log("Submitted question ID:", questionid);
 
     try {
-      setFormError(null)
+      setFormError(null);
       setUploadSuccess(true);
-      await reviewQuestion(questionid)
-      if (DeploySuccess) {
+      const isDeployed = await reviewQuestion(questionid);
+      setDeploySuccess(isDeployed);
+      console.log('isDeployed returned:', isDeployed);
+      if (isDeployed) {
         setTimeout(() => {
           navigate('/');
         }, 3000);
@@ -193,7 +197,7 @@ const Upload = () => {
           messages: [
             {
               role: "system",
-              content: "请审核以下错题信息是否完整合规，重点检查是否包含敏感内容及学科匹配性，和其是否符合一个高中生的错题内容所应该有的，如若审核通过，则输出字符串'是'，否则输出字符串'不是'"
+              content: "请审核以下错题信息是否完整合规，重点检查是否包含敏感内容及学科匹配性，和其是否符合一个学生的错题内容所应该有的，如若审核通过，则输出字符串'是'，否则输出字符串'不是'"
             },
             {
               role: "user",
@@ -219,18 +223,31 @@ const Upload = () => {
       const thinkingResult = result.choices?.[0]?.message?.reasoning_content || "";
       const isDeployed = !processedResult.trim().includes("不是");
       setDeploySuccess(isDeployed);
+      console.log('reviewQuestion determined isDeployed:', isDeployed);
       setReasoningContent(thinkingResult)
 
-      const { error: insertError } = await supabase
+      // --- Changed: use .select() and inspect returned data/error, add logs and explicit checks ---
+      const { data: updateData, error: updateError } = await supabase
         .from('question')
         .update({ deployed: isDeployed })
         .eq('id', questionId)
-      if (insertError) {
-        throw new Error(`数据插入失败: ${insertError.message}`)
+        .select();
+
+      console.log('supabase.update result:', { questionId, isDeployed, updateData, updateError });
+
+      if (updateError) {
+        // 如果有错误，抛出以便上层捕获并提示
+        throw new Error(`数据更新失败: ${updateError.message}`);
       }
+      // 如果没有错误但返回的数据为空，说明没有匹配到行或权限问题
+      if (!updateData || updateData.length === 0) {
+        throw new Error('更新返回为空，可能未找到记录或没有权限更新该记录（请检查 RLS 和 questionId）');
+      }
+      // --- end changed ---
 
       console.log(processedResult, thinkingResult);
-      return processedResult;
+      // 返回布尔结果，供调用处立即使用
+      return isDeployed;
 
     } catch (error) {
       console.error("审核接口调用失败:", error);
@@ -329,19 +346,23 @@ const Upload = () => {
             )
           ) : (
             <div>
-              <div style={{
-                fontSize: '100px',
-                color: '#4039a3',
-                marginBottom: '20px',
-                animation: 'spin 1.5s linear infinite'
-              }}>↻</div>
+              <img
+                src={arrowClock}
+                alt="↻"
+                style={{
+                  width: '100px',
+                  height: '100px',
+                  marginBottom: '20px',
+                  animation: 'spin 1.5s linear infinite'
+                }}
+              />
               <p style={{
                 color: '#2c3e50',
                 fontSize: '20px',
                 lineHeight: '1.6',
                 fontWeight: 500,
               }}>
-                正在审核，请稍等
+                正在审核，请耐心等待，不要退出页面
               </p>
             </div>
           )}
