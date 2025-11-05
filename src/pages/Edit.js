@@ -136,7 +136,7 @@ const Edit = () => {
           messages: [
             {
               role: "system",
-              content: "请审核以下错题信息是否完整合规，重点检查是否包含敏感内容及学科匹配性，和其是否符合一个学生的错题内容所应该有的，如若审核通过，则输出字符串'是'，否则输出字符串'不是'"
+              content: "请审核以下错题信息是否完整合规，重点检查是否包含敏感内容，学科匹配性，和其是否符合一个学生的错题内容所应该有的，不需要深究题型问题，如若审核通过，则输出字符串'是'，否则输出字符串'不是'"
             },
             {
               role: "user",
@@ -164,15 +164,6 @@ const Edit = () => {
       setDeploySuccess(isDeployed)
       setReasoningContent(thinkingResult)
 
-      const { data: updateData, error: updateError } = await supabase
-        .from('question')
-        .update({ deployed: isDeployed })
-        .eq('id', questionId)
-        .select()
-
-      if (updateError) throw new Error(updateError.message)
-      if (!updateData || updateData.length === 0) throw new Error('更新返回为空')
-
       return isDeployed
     } catch (error) {
       console.error('审核失败', error)
@@ -191,7 +182,39 @@ const Edit = () => {
     try {
       setFormError(null)
 
-      // upload question image if new file selected
+      // Build the payload for review using current image URLs (new images are not uploaded yet)
+      const payloadForReview = {
+        subject: selectedSubjects.join("&"),
+        type: questionType,
+        content: questionContent,
+        eanswer: wrongAnswer,
+        canswer: correctAnswer,
+        analysis,
+        qimageurl, // existing image URL (if any)
+        aimageurl,
+        author: userName || '匿名'
+      }
+
+      const finalId = getFinalId()
+      if (!finalId) {
+        setFormError('未提供要更新的 ID')
+        return
+      }
+
+      // Show the review UI first
+      setUploadSuccess(true)
+
+      // First: review. If review fails, do NOT update DB.
+      const isDeployed = await reviewQuestion(finalId, payloadForReview)
+      setDeploySuccess(isDeployed)
+
+      if (!isDeployed) {
+        // Do not proceed to update database. Keep the review UI visible and navigate after a delay.
+        setTimeout(() => navigate('/'), 15000)
+        return
+      }
+
+      // If approved, proceed to upload any new images and then update the DB
       let newQimageurl = qimageurl
       if (questionImg) {
         const fileExt = questionImg.name.split('.').pop()
@@ -230,12 +253,6 @@ const Edit = () => {
         author: userName || '匿名'
       }
 
-      const finalId = getFinalId()
-      if (!finalId) {
-        setFormError('未提供要更新的 ID')
-        return
-      }
-
       const { data, error } = await supabase
         .from('question')
         .update(payload)
@@ -247,16 +264,9 @@ const Edit = () => {
         return
       }
 
-      setUploadSuccess(true)
-  // trigger review
-  const isDeployed = await reviewQuestion(finalId, payload)
-      setDeploySuccess(isDeployed)
-
-      if (isDeployed) {
-        setTimeout(() => navigate('/'), 3000)
-      } else {
-        setTimeout(() => navigate('/'), 15000)
-      }
+      // keep uploadSuccess true to show the success/review UI
+      // navigate after short delay for approved updates
+      setTimeout(() => navigate('/'), 3000)
 
     } catch (err) {
       console.error(err)
@@ -306,14 +316,14 @@ const Edit = () => {
               <div>
                 <div style={{ fontSize: '48px', color: '#2ecc71', marginBottom: '20px' }}>✔</div>
                 <p style={{ color: '#2c3e50', fontSize: '20px', lineHeight: '1.6', fontWeight: 500 }}>
-                  更新并审核通过，将在3s后返回首页...
+                  审核通过，将在3s后返回首页...
                 </p>
               </div>
             ) : (
               <div>
                 <div style={{ fontSize: '48px', color: '#ff2323', marginBottom: '20px' }}>✘</div>
                 <p style={{ color: '#2c3e50', fontSize: '20px', lineHeight: '1.6', fontWeight: 500 }}>
-                  更新成功但审核未通过，理由：<br />{reasoningContent}<br />将在15s后返回首页...
+                  审核未通过，理由：<br />{reasoningContent}<br />将在15s后返回首页...
                 </p>
               </div>
             )

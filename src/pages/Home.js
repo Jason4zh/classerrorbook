@@ -55,7 +55,7 @@ const Home = () => {
       const { data, error } = await supabase
         .from('question')
         .select()
-        .eq('deployed',true)
+        .eq('deployed', true)
         .order('id', { ascending: true })
       if (error) {
         setFetchError('Could not fetch the questions')
@@ -226,7 +226,7 @@ const Home = () => {
               marginTop: 4
             }}>
               <option value="">全部</option>
-              
+
             </select>
           </div>
           <div className="search-item" style={{ flex: 2, minWidth: 250 }}>
@@ -281,6 +281,7 @@ const Home = () => {
         <div className="question-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
           {filteredQuestions && filteredQuestions.length > 0 ? (
             filteredQuestions.map((q, idx) => (
+
               <div className="question-card" key={q.id || idx} style={{
                 border: '1.5px solid #e3eaf2',
                 borderRadius: 12,
@@ -333,9 +334,15 @@ const Home = () => {
                   {q.type === 'essay' && '解答题'}
                   {!['single', 'multiple', 'fill', 'essay'].includes(q.type) && (q.type || '未知题型')}
                 </span>
-                <div className="question" style={{ fontSize: 16, margin: '12px 0 10px 0', lineHeight: 1.7, color: '#34495e' }}>
-                  {renderLatex(q.content) || '题干内容'}
-                </div>
+                <Link
+                  to={`/preview/${q.id}`}
+                  style={{ textDecoration: 'none' }}  // 移除链接默认下划线
+                  key={q.id || idx}
+                >
+                  <div className="question" style={{ fontSize: 16, margin: '12px 0 10px 0', lineHeight: 1.7, color: '#34495e' }}>
+                    {renderLatex(q.content) || '题干内容'}
+                  </div>
+                </Link>
                 {q.qimageurl && (
                   <div className="question-image" style={{ marginBottom: 10 }}>
                     <img

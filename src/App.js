@@ -7,6 +7,7 @@ import Create from "./pages/Create"
 import Update from "./pages/Update"
 import Edit from "./pages/Edit"
 import Login from "./pages/Login"
+import Preview from "./pages/Preview"
 
 function AppRoutes() {
   const [user, setUser] = useState(null)
@@ -213,6 +214,9 @@ function AppRoutes() {
         <Route path="/update" element={<Update />} />
         <Route path="/edit" element={<Edit />} />
         <Route path="/edit/:id" element={<Edit />} />
+        <Route path="/preview" element={<Preview />} />
+        <Route path="/preview/:id" element={<Preview />} />
+        
       </Routes>
     </>
   )
