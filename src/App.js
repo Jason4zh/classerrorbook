@@ -5,6 +5,7 @@ import Index from "./pages/Index"
 import Home from "./pages/Home"
 import Create from "./pages/Create"
 import Update from "./pages/Update"
+import Edit from "./pages/Edit"
 import Login from "./pages/Login"
 
 function AppRoutes() {
@@ -209,7 +210,9 @@ function AppRoutes() {
         <Route path="/search" element={<Home />} />
         <Route path="/create" element={<Create />} />
         <Route path="/login" element={<Login onLoginSuccess={refreshUser} />} />
-        <Route path="/:id" element={<Update />} />
+        <Route path="/update" element={<Update />} />
+        <Route path="/edit" element={<Edit />} />
+        <Route path="/edit/:id" element={<Edit />} />
       </Routes>
     </>
   )

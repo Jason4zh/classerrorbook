@@ -1,0 +1,420 @@
+import { useState, useEffect } from "react"
+import { useNavigate, useParams, useLocation, Link } from "react-router-dom"
+import supabase from "../config/supabaseClient"
+import arrowClock from "../assets/arrow-clockwise.svg"
+
+const Edit = () => {
+  const params = useParams()
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const getFinalId = () => {
+    // resolve id from route params, navigate state, or query string
+    const pid = params.id || location.state?.id || new URLSearchParams(location.search).get('id')
+    if (pid == null) return null
+    const num = Number(pid)
+    return Number.isNaN(num) ? pid : num
+  }
+
+  const [selectedSubjects, setSelectedSubjects] = useState([])
+  const [questionType, setQuestionType] = useState('')
+  const [questionContent, setQuestionContent] = useState('')
+  const [wrongAnswer, setWrongAnswer] = useState('')
+  const [correctAnswer, setCorrectAnswer] = useState('')
+  const [analysis, setAnalysis] = useState('')
+  const [questionImg, setQuestionImg] = useState(null)
+  const [answerImg, setAnswerImg] = useState(null)
+  const [qimageurl, setQimageurl] = useState(null)
+  const [aimageurl, setAimageurl] = useState(null)
+  const [formError, setFormError] = useState(null)
+  const [uploadSuccess, setUploadSuccess] = useState(false)
+  const [deploySuccess, setDeploySuccess] = useState(null)
+  const [reasoningContent, setReasoningContent] = useState(null)
+  const [userName, setUserName] = useState('')
+
+  const subjects = [
+    { value: 'chinese', label: '语文' },
+    { value: 'math', label: '数学' },
+    { value: 'english', label: '英语' },
+    { value: 'physics', label: '物理' },
+    { value: 'chemistry', label: '化学' },
+    { value: 'politics', label: '政治' },
+    { value: 'history', label: '历史' },
+    { value: 'biology', label: '生物' },
+    { value: 'geography', label: '地理' }
+  ]
+
+  useEffect(() => {
+    const getUsername = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData.user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', userData.user.id)
+          .single();
+        if (data) setUserName(data.username)
+        else setUserName('匿名')
+      } else {
+        setUserName('匿名')
+      }
+    }
+    getUsername()
+  }, [])
+
+  useEffect(() => {
+    const resolved = getFinalId()
+    if (!resolved) {
+      setFormError('未提供要编辑的 ID')
+      return
+    }
+    const fetchQuestion = async () => {
+      const { data, error } = await supabase.from('question').select().eq('id', resolved).single()
+      if (error) {
+        setFormError('无法加载数据，请稍后重试')
+        return
+      }
+      if (data) {
+        setSelectedSubjects(data.subject ? data.subject.split('&') : [])
+        setQuestionType(data.type || '')
+        setQuestionContent(data.content || '')
+        setWrongAnswer(data.eanswer || '')
+        setCorrectAnswer(data.canswer || '')
+        setAnalysis(data.analysis || '')
+        setQimageurl(data.qimageurl || null)
+        setAimageurl(data.aimageurl || null)
+        setFormError(null)
+      }
+    }
+    fetchQuestion()
+    // rerun if params or location change
+  }, [params, location])
+
+  const handleSubjectChange = (subjectValue) => {
+    setSelectedSubjects(prev =>
+      prev.includes(subjectValue)
+        ? prev.filter(s => s !== subjectValue)
+        : [...prev, subjectValue]
+    )
+  }
+
+  const handleQuestionFileChange = (e) => {
+    setQuestionImg(e.target.files[0])
+  }
+  const handleAnswerFileChange = (e) => {
+    setAnswerImg(e.target.files[0])
+  }
+
+  const handleQuestionDrop = (e) => {
+    e.preventDefault()
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setQuestionImg(e.dataTransfer.files[0])
+    }
+  }
+  const handleAnswerDrop = (e) => {
+    e.preventDefault()
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setAnswerImg(e.dataTransfer.files[0])
+    }
+  }
+
+  const handleDragOver = (e) => e.preventDefault()
+  const handleAnswerDragOver = (e) => e.preventDefault()
+
+  const reviewQuestion = async (questionId, payloadSnapshot) => {
+    try {
+      // Use the same review endpoint as Create — keep Authorization token management outside scope
+      const questionData = payloadSnapshot
+      const response = await fetch("https://api.siliconflow.cn/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer sk-iysspznbiomjccbkyrkzjcnorqyvuazhldmykzxzqrlcmrtl`
+        },
+        body: JSON.stringify({
+          model: "Qwen/Qwen3-8B",
+          messages: [
+            {
+              role: "system",
+              content: "请审核以下错题信息是否完整合规，重点检查是否包含敏感内容及学科匹配性，和其是否符合一个学生的错题内容所应该有的，如若审核通过，则输出字符串'是'，否则输出字符串'不是'"
+            },
+            {
+              role: "user",
+              content: `请审核以下错题数据：${JSON.stringify(questionData, null, 2)}`
+            }
+          ],
+          enable_thinking: true,
+          temperature: 0.3,
+          max_tokens: 1024,
+          top_p: 0.9,
+          stream: false,
+          stop: ["###"]
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(`API错误: ${errorData.error?.message || response.statusText}`)
+      }
+
+      const result = await response.json()
+      const processedResult = result.choices?.[0]?.message?.content || ""
+      const thinkingResult = result.choices?.[0]?.message?.reasoning_content || ""
+      const isDeployed = !processedResult.trim().includes("不是")
+      setDeploySuccess(isDeployed)
+      setReasoningContent(thinkingResult)
+
+      const { data: updateData, error: updateError } = await supabase
+        .from('question')
+        .update({ deployed: isDeployed })
+        .eq('id', questionId)
+        .select()
+
+      if (updateError) throw new Error(updateError.message)
+      if (!updateData || updateData.length === 0) throw new Error('更新返回为空')
+
+      return isDeployed
+    } catch (error) {
+      console.error('审核失败', error)
+      setFormError('审核过程出错，请稍后重试')
+      throw error
+    }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (selectedSubjects.length === 0 || !questionType || !questionContent || !wrongAnswer || !correctAnswer) {
+      setFormError('请完整填写带 * 的必填项')
+      return
+    }
+
+    try {
+      setFormError(null)
+
+      // upload question image if new file selected
+      let newQimageurl = qimageurl
+      if (questionImg) {
+        const fileExt = questionImg.name.split('.').pop()
+        const fileName = `${Date.now()}.${fileExt}`
+        const { data: uploadData, error: uploadError } = await supabase
+          .storage
+          .from('questionimg')
+          .upload(fileName, questionImg)
+        if (uploadError) throw new Error('图片上传失败')
+        newQimageurl = "https://hqzemultusietooosnxt.supabase.co/storage/v1/object/public/questionimg/" + uploadData?.path
+        setQimageurl(newQimageurl)
+      }
+
+      let newAimageurl = aimageurl
+      if (answerImg) {
+        const fileExt = answerImg.name.split('.').pop()
+        const fileName = `${Date.now()}_answer.${fileExt}`
+        const { data: uploadData, error: uploadError } = await supabase
+          .storage
+          .from('answerimg')
+          .upload(fileName, answerImg)
+        if (uploadError) throw new Error('正确答案图片上传失败')
+        newAimageurl = "https://hqzemultusietooosnxt.supabase.co/storage/v1/object/public/answerimg/" + uploadData?.path
+        setAimageurl(newAimageurl)
+      }
+
+      const payload = {
+        subject: selectedSubjects.join("&"),
+        type: questionType,
+        content: questionContent,
+        eanswer: wrongAnswer,
+        canswer: correctAnswer,
+        analysis,
+        qimageurl: newQimageurl,
+        aimageurl: newAimageurl,
+        author: userName || '匿名'
+      }
+
+      const finalId = getFinalId()
+      if (!finalId) {
+        setFormError('未提供要更新的 ID')
+        return
+      }
+
+      const { data, error } = await supabase
+        .from('question')
+        .update(payload)
+        .eq('id', finalId)
+        .select()
+
+      if (error) {
+        setFormError('更新失败，请重试')
+        return
+      }
+
+      setUploadSuccess(true)
+  // trigger review
+  const isDeployed = await reviewQuestion(finalId, payload)
+      setDeploySuccess(isDeployed)
+
+      if (isDeployed) {
+        setTimeout(() => navigate('/'), 3000)
+      } else {
+        setTimeout(() => navigate('/'), 15000)
+      }
+
+    } catch (err) {
+      console.error(err)
+      setFormError(err.message || '更新过程中发生错误')
+    }
+  }
+
+  const selectStyle = {
+    width: '100%',
+    padding: '14px 16px',
+    border: '2px solid #e3eaf2',
+    borderRadius: '12px',
+    fontSize: '16px',
+    background: '#fafdff',
+    marginTop: '6px',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    appearance: 'none',
+    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+    backgroundPosition: 'right 16px center',
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: '20px',
+    paddingRight: '48px'
+  }
+
+  return (
+    uploadSuccess ? (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'column',
+        background: '#f7f9fb',
+        padding: '20px'
+      }}>
+        <div style={{
+          textAlign: 'center',
+          maxWidth: '500px',
+          padding: '40px',
+          background: '#fff',
+          borderRadius: '16px',
+          boxShadow: '0 4px 24px rgba(25, 118, 210, 0.1)'
+        }}>
+          {typeof deploySuccess === 'boolean' ? (
+            deploySuccess ? (
+              <div>
+                <div style={{ fontSize: '48px', color: '#2ecc71', marginBottom: '20px' }}>✔</div>
+                <p style={{ color: '#2c3e50', fontSize: '20px', lineHeight: '1.6', fontWeight: 500 }}>
+                  更新并审核通过，将在3s后返回首页...
+                </p>
+              </div>
+            ) : (
+              <div>
+                <div style={{ fontSize: '48px', color: '#ff2323', marginBottom: '20px' }}>✘</div>
+                <p style={{ color: '#2c3e50', fontSize: '20px', lineHeight: '1.6', fontWeight: 500 }}>
+                  更新成功但审核未通过，理由：<br />{reasoningContent}<br />将在15s后返回首页...
+                </p>
+              </div>
+            )
+          ) : (
+            <div>
+              <img src={arrowClock} alt="↻" style={{ width: '100px', height: '100px', marginBottom: '20px', animation: 'spin 1.5s linear infinite' }} />
+              <p style={{ color: '#2c3e50', fontSize: '20px', lineHeight: '1.6', fontWeight: 500 }}>正在审核，请耐心等待...</p>
+            </div>
+          )}
+        </div>
+      </div>
+    ) : (
+      <div className="container" style={{ maxWidth: '100%', margin: '0 auto', padding: '32px 20px 60px', background: '#f7f9fb', minHeight: '100vh' }}>
+        <div className="nav" style={{ marginBottom: 20 }}>
+          <Link to='/' className="nav-link" style={{ color: '#3498db', textDecoration: 'none', fontSize: 16 }}>← 返回首页</Link>
+        </div>
+
+        <h1 className="page-title" style={{ fontSize: 32, fontWeight: 700, color: '#1976d2', marginBottom: 28, textAlign: 'center', letterSpacing: 1 }}>编辑错题</h1>
+
+        <div className="card" style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 24px rgba(25, 118, 210, 0.07)', padding: '32px 24px', marginBottom: 32 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 600, color: '#1976d2', marginBottom: 18 }}>修改错题信息</h2>
+
+          <form id="editForm" onSubmit={handleSubmit}>
+            <div style={{ marginBottom: 22 }}>
+              <label style={{ fontWeight: 500, marginBottom: 12, display: 'block', color: '#34495e' }}>选择学科 <span style={{ color: '#e74c3c' }}>*</span></label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 6 }}>
+                {subjects.map(subject => (
+                  <label key={subject.value} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '8px 16px', borderRadius: 8, border: `2px solid ${selectedSubjects.includes(subject.value) ? '#1976d2' : '#e3eaf2'}`, background: selectedSubjects.includes(subject.value) ? '#e3f2fd' : '#fafdff', transition: 'all 0.2s ease' }}>
+                    <input type="checkbox" value={subject.value} checked={selectedSubjects.includes(subject.value)} onChange={() => handleSubjectChange(subject.value)} style={{ marginRight: 8, width: 18, height: 18, accentColor: '#1976d2' }} />
+                    <span style={{ fontSize: 16, color: selectedSubjects.includes(subject.value) ? '#1976d2' : '#34495e', fontWeight: selectedSubjects.includes(subject.value) ? 500 : 'normal' }}>{subject.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 22 }}>
+              <label style={{ fontWeight: 500, marginBottom: 7, display: 'block', color: '#34495e' }}>选择题型 <span style={{ color: '#e74c3c' }}>*</span></label>
+              <select value={questionType} onChange={e => setQuestionType(e.target.value)} style={selectStyle}>
+                <option value="">请选择题型</option>
+                <option value="single">单选题</option>
+                <option value="multiple">多选题</option>
+                <option value="fill">填空题</option>
+                <option value="essay">解答题</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: 22 }}>
+              <label style={{ fontWeight: 500, marginBottom: 7, display: 'block', color: '#34495e' }}>错题题干 <span style={{ color: '#e74c3c' }}>*</span></label>
+              <textarea value={questionContent} onChange={e => setQuestionContent(e.target.value)} required style={{ width: '100%', padding: '12px 14px', border: '1.5px solid #e3eaf2', borderRadius: 8, fontSize: 16, background: '#fafdff', marginTop: 4, minHeight: 70, resize: 'vertical' }} />
+            </div>
+
+            <div style={{ marginBottom: 22 }}>
+              <label style={{ fontWeight: 500, marginBottom: 7, display: 'block', color: '#34495e' }}>上传错题照片（可选）</label>
+              <div className="upload-area" onClick={() => document.getElementById('questionImg').click()} onDrop={handleQuestionDrop} onDragOver={handleDragOver} style={{ border: '2px dashed #90caf9', borderRadius: 10, background: '#f1f8fe', padding: '32px 0', textAlign: 'center', cursor: 'pointer', transition: 'border 0.2s, background 0.2s', marginTop: 6, color: '#1976d2', fontSize: 17, fontWeight: 500 }}>
+                <div>{questionImg ? questionImg.name : (qimageurl ? '保持原图或上传新图片' : '点击或拖拽文件到此处上传（支持JPG/PNG格式）')}</div>
+                <input type="file" id="questionImg" accept="image/jpg,image/png" style={{ display: 'none' }} onChange={handleQuestionFileChange} />
+              </div>
+              {qimageurl && !questionImg && (
+                <div style={{ marginTop: 10 }}>
+                  <img src={qimageurl} alt="题目图片" style={{ maxWidth: '100%', borderRadius: 8, border: '1.5px solid #e3eaf2' }} />
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginBottom: 22 }}>
+              <label style={{ fontWeight: 500, marginBottom: 7, display: 'block', color: '#34495e' }}>你的错误答案 <span style={{ color: '#e74c3c' }}>*</span></label>
+              <textarea value={wrongAnswer} onChange={e => setWrongAnswer(e.target.value)} required style={{ width: '100%', padding: '12px 14px', border: '1.5px solid #e3eaf2', borderRadius: 8, fontSize: 16, background: '#fafdff', marginTop: 4 }} />
+            </div>
+
+            <div style={{ marginBottom: 22 }}>
+              <label style={{ fontWeight: 500, marginBottom: 7, display: 'block', color: '#34495e' }}>正确答案 <span style={{ color: '#e74c3c' }}>*</span></label>
+              <textarea value={correctAnswer} onChange={e => setCorrectAnswer(e.target.value)} required style={{ width: '100%', padding: '12px 14px', border: '1.5px solid #e3eaf2', borderRadius: 8, fontSize: 16, background: '#fafdff', marginTop: 4, minHeight: 50, resize: 'vertical' }} />
+            </div>
+
+            <div style={{ marginBottom: 22 }}>
+              <label style={{ fontWeight: 500, marginBottom: 7, display: 'block', color: '#34495e' }}>上传正确答案照片（可选）</label>
+              <div className="upload-area" onClick={() => document.getElementById('answerImg').click()} onDrop={handleAnswerDrop} onDragOver={handleAnswerDragOver} style={{ border: '2px dashed #90caf9', borderRadius: 10, background: '#f1f8fe', padding: '32px 0', textAlign: 'center', cursor: 'pointer', transition: 'border 0.2s, background 0.2s', marginTop: 6, color: '#1976d2', fontSize: 17, fontWeight: 500 }}>
+                <div>{answerImg ? answerImg.name : (aimageurl ? '保持原图或上传新图片' : '点击或拖拽文件到此处上传（支持JPG/PNG格式）')}</div>
+                <input type="file" id="answerImg" accept="image/jpg,image/png" style={{ display: 'none' }} onChange={handleAnswerFileChange} />
+              </div>
+              {aimageurl && !answerImg && (
+                <div style={{ marginTop: 10 }}>
+                  <img src={aimageurl} alt="正确答案图片" style={{ maxWidth: '100%', borderRadius: 8, border: '1.5px solid #e3eaf2' }} />
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginBottom: 22 }}>
+              <label style={{ fontWeight: 500, marginBottom: 7, display: 'block', color: '#34495e' }}>错误分析（可选）</label>
+              <textarea value={analysis} onChange={e => setAnalysis(e.target.value)} style={{ width: '100%', padding: '12px 14px', border: '1.5px solid #e3eaf2', borderRadius: 8, fontSize: 16, background: '#fafdff', marginTop: 4, minHeight: 50, resize: 'vertical' }} />
+            </div>
+
+            <button type="submit" style={{ background: 'linear-gradient(90deg, #1976d2 60%, #42a5f5 100%)', color: '#fff', border: 'none', borderRadius: 8, padding: '12px 28px', fontSize: 18, fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s, box-shadow 0.2s', boxShadow: '0 2px 8px rgba(25, 118, 210, 0.08)', marginTop: 8 }}>确认更新</button>
+            {formError && <p style={{ color: '#e74c3c', marginTop: 10, fontSize: 16 }}>{formError}</p>}
+          </form>
+        </div>
+
+        <style jsx global>{`@keyframes spin {0% { transform: rotate(0deg) scale(1); opacity: 0.7; } 50% { transform: rotate(180deg) scale(1.3); opacity: 1; } 100% { transform: rotate(360deg) scale(1); opacity: 0.7; } }`}</style>
+      </div>
+    )
+  )
+}
+
+export default Edit

@@ -398,6 +398,17 @@ const Home = () => {
                 <div className="meta" style={{ fontSize: 14, color: '#999', marginTop: 10 }}>
                   {q.created_at.slice(0, 19) || '未知日期'} | 提交人：{q.author || '匿名'}
                 </div>
+                <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                  <Link to={`/edit/${q.id}`} style={{
+                    padding: '8px 12px',
+                    background: '#1976d2',
+                    color: '#fff',
+                    borderRadius: 8,
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                    fontSize: 14
+                  }}>编辑</Link>
+                </div>
               </div>
             ))
           ) : (
