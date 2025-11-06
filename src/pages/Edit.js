@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useParams, useLocation, Link } from "react-router-dom"
 import supabase from "../config/supabaseClient"
-import arrowClock from "../assets/arrow-clockwise.svg"
+import 'bootstrap-icons/font/bootstrap-icons.css'
 
 const Edit = () => {
   const params = useParams()
@@ -136,7 +136,7 @@ const Edit = () => {
           messages: [
             {
               role: "system",
-              content: "请审核以下错题信息是否完整合规，重点检查是否包含敏感内容，学科匹配性，和其是否符合一个学生的错题内容所应该有的，不需要深究题型问题，如若审核通过，则输出字符串'是'，否则输出字符串'不是'"
+              content: "请审核以下错题信息是否完整合规，重点检查是否包含敏感内容，学科匹配性，和其是否符合一个学生的错题内容所应该有的，不需要深究题型问题和题目答案是否正确，如若审核通过，则输出字符串'是'，否则输出字符串'不是'"
             },
             {
               role: "user",
@@ -266,7 +266,7 @@ const Edit = () => {
 
       // keep uploadSuccess true to show the success/review UI
       // navigate after short delay for approved updates
-      setTimeout(() => navigate('/'), 3000)
+      setTimeout(() => navigate('/search'), 3000)
 
     } catch (err) {
       console.error(err)
@@ -329,8 +329,19 @@ const Edit = () => {
             )
           ) : (
             <div>
-              <img src={arrowClock} alt="↻" style={{ width: '100px', height: '100px', marginBottom: '20px', animation: 'spin 1.5s linear infinite' }} />
+              <i className="bi bi-arrow-clockwise" style={{
+                fontSize: '100px',
+                marginBottom: '20px',
+                animation: 'spin 1.5s linear infinite',
+                color: '#1976d2'
+              }}></i>
               <p style={{ color: '#2c3e50', fontSize: '20px', lineHeight: '1.6', fontWeight: 500 }}>正在审核，请耐心等待...</p>
+        <style jsx global>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
             </div>
           )}
         </div>
@@ -420,8 +431,6 @@ const Edit = () => {
             {formError && <p style={{ color: '#e74c3c', marginTop: 10, fontSize: 16 }}>{formError}</p>}
           </form>
         </div>
-
-        <style jsx global>{`@keyframes spin {0% { transform: rotate(0deg) scale(1); opacity: 0.7; } 50% { transform: rotate(180deg) scale(1.3); opacity: 1; } 100% { transform: rotate(360deg) scale(1); opacity: 0.7; } }`}</style>
       </div>
     )
   )

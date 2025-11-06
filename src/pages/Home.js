@@ -15,6 +15,8 @@ const Home = () => {
   const [viewerVisible, setViewerVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState('');
   const [allImages, setAllImages] = useState([]);
+  const [uploaders, setUploaders] = useState([]);
+  const [selectedUploader, setSelectedUploader] = useState('');
 
   // 处理LaTeX公式渲染
   const renderLatex = (content) => {
@@ -64,6 +66,8 @@ const Home = () => {
       if (data) {
         setQuestions(data)
         setFetchError(null)
+        const uniqueUploaders = [...new Set(data.map(q => q.author).filter(Boolean))];
+        setUploaders(uniqueUploaders);
       }
     }
 
@@ -73,11 +77,11 @@ const Home = () => {
   const handleSearch = () => {
     let filtered = [...questions];
 
-    // 先进行学科和题型筛选
-    if (subject || type) {
+    if (subject || type || selectedUploader) {
       filtered = filtered.filter(q =>
         (subject ? q.subject === subject : true) &&
-        (type ? q.type === type : true)
+        (type ? q.type === type : true) &&
+        (selectedUploader ? q.author === selectedUploader : true)
       );
     }
 
@@ -216,17 +220,25 @@ const Home = () => {
           </div>
           <div className="filter-item" style={{ flex: 1, minWidth: 180 }}>
             <label style={{ display: 'block', marginBottom: 7, fontSize: 15, fontWeight: 500, color: '#34495e' }}>上传者</label>
-            <select className="input" value={type} onChange={e => setType(e.target.value)} style={{
-              width: '100%',
-              padding: '12px 14px',
-              border: '1.5px solid #e3eaf2',
-              borderRadius: 8,
-              fontSize: 16,
-              background: '#fafdff',
-              marginTop: 4
-            }}>
+            <select
+              className="input"
+              value={selectedUploader}
+              onChange={e => setSelectedUploader(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: '1.5px solid #e3eaf2',
+                borderRadius: 8,
+                fontSize: 16,
+                background: '#fafdff',
+                marginTop: 4
+              }}>
               <option value="">全部</option>
-
+              {uploaders.map((uploader, index) => (
+                <option key={index} value={uploader}>
+                  {uploader}
+                </option>
+              ))}
             </select>
           </div>
           <div className="search-item" style={{ flex: 2, minWidth: 250 }}>
@@ -432,6 +444,7 @@ const Home = () => {
         rotatable={true}
         scalable={true}
         onMaskClick={() => setViewerVisible(false)}
+        downloadable={true}
       />
     </div>
 

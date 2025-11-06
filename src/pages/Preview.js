@@ -2,15 +2,21 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import supabase from '../config/supabaseClient';
 import { useParams } from 'react-router-dom';
+import Viewer from 'react-viewer';
+import { InlineMath, BlockMath } from 'react-katex';
+import 'katex/dist/katex.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 const QuestionPreview = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [likes, setLikes] = useState({});
-  // 添加点赞状态锁，防止重复点击
-  const [isLiking, setIsLiking] = useState({});
+  const [dislikes, setDislikes] = useState({}); // 新增不喜欢状态
   const { id } = useParams();
+  const [viewerVisible, setViewerVisible] = useState(false);
+  const [currentImage, setCurrentImage] = useState('');
+  const [imageList, setImageList] = useState([]);
 
   const subjectMap = {
     'chinese': '语文',
@@ -31,6 +37,13 @@ const QuestionPreview = () => {
     'essay': '解答题'
   };
 
+  const openImageViewer = (imageUrl, allImages) => {
+    setImageList(allImages);
+    setCurrentImage(imageUrl);
+    setViewerVisible(true);
+  };
+
+
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
@@ -43,16 +56,17 @@ const QuestionPreview = () => {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        
-        // 从数据库获取点赞数并初始化
+
         const initialLikes = {};
+        const initialDislikes = {}; // 初始化不喜欢计数
         data.forEach(question => {
-          // 确保点赞数为非负数字
           initialLikes[question.id] = Math.max(0, Number(question.likes) || 0);
+          initialDislikes[question.id] = Math.max(0, Number(question.dislikes) || 0); // 从数据库获取不喜欢数
         });
-        
+
         setQuestions(data);
         setLikes(initialLikes);
+        setDislikes(initialDislikes); // 设置不喜欢状态
       } catch (err) {
         console.error('Error fetching questions:', err);
         setError('获取错题失败，请稍后重试');
@@ -64,42 +78,48 @@ const QuestionPreview = () => {
     fetchQuestions();
   }, []);
 
-  const handleLike = async (questionId) => {
-    // 如果正在点赞中，阻止重复点击
-    if (isLiking[questionId]) return;
+  // 简化的点赞处理，仅客户端计数+1，不调用API
+  const handleLike = (questionId) => {
+    setLikes(prev => ({
+      ...prev,
+      [questionId]: Math.max(0, prev[questionId] || 0) + 1
+    }));
+  };
 
-    try {
-      setIsLiking(prev => ({ ...prev, [questionId]: true }));
-      
-      // 获取当前点赞数并确保其为非负
-      const currentLikes = Math.max(0, likes[questionId] || 0);
-      const newLikesCount = currentLikes + 1;
-      
-      // 先更新本地状态，提升用户体验
-      setLikes(prev => ({ ...prev, [questionId]: newLikesCount }));
-
-      // 更新数据库中的点赞数
-      const { error } = await supabase
-        .from('question')
-        .update({ likes: newLikesCount })
-        .eq('id', questionId);
-
-      if (error) throw error;
-    } catch (err) {
-      console.error('Error updating likes:', err);
-      // 出错时回滚本地状态
-      setLikes(prev => ({ 
-        ...prev, 
-        [questionId]: Math.max(0, prev[questionId] || 0) 
-      }));
-    } finally {
-      // 解除点赞状态锁
-      setIsLiking(prev => ({ ...prev, [questionId]: false }));
-    }
+  // 新增不喜欢处理，与点赞逻辑相同
+  const handleDislike = (questionId) => {
+    setDislikes(prev => ({
+      ...prev,
+      [questionId]: Math.max(0, prev[questionId] || 0) + 1
+    }));
   };
 
   const handleImageError = (e) => {
     e.target.src = 'https://via.placeholder.com/150?text=图片加载失败';
+  };
+
+  const renderLatex = (content) => {
+    if (!content) return null;
+    
+    // 分割文本和公式（假设公式用$$包裹块级公式，$包裹行内公式）
+    const parts = content.split(/(\$\$.*?\$\$|\$.*?\$)/gs);
+    
+    return parts.map((part, index) => {
+      // 块级公式（$$...$$）
+      if (part.startsWith('$$') && part.endsWith('$$')) {
+        const formula = part.slice(2, -2).trim();
+        return <BlockMath key={index} math={formula} />;
+      }
+      // 行内公式（$...$）
+      else if (part.startsWith('$') && part.endsWith('$')) {
+        const formula = part.slice(1, -1).trim();
+        return <InlineMath key={index} math={formula} />;
+      }
+      // 普通文本
+      else {
+        return <span key={index}>{part}</span>;
+      }
+    });
   };
 
   if (loading) {
@@ -117,7 +137,7 @@ const QuestionPreview = () => {
     return (
       <div style={styles.container}>
         <div style={styles.error}>{error}</div>
-        <button 
+        <button
           onClick={() => window.location.reload()}
           style={styles.retryBtn}
         >
@@ -142,8 +162,20 @@ const QuestionPreview = () => {
 
   return (
     <div style={styles.container}>
+      <Viewer
+        visible={viewerVisible}
+        onClose={() => setViewerVisible(false)}
+        images={imageList.map(url => ({ src: url }))}
+        activeIndex={imageList.indexOf(currentImage)}
+        zoomable={true}
+        rotatable={true}
+        scalable={true}
+        onMaskClick={() => setViewerVisible(false)}
+        downloadable={true}
+      />
+
       <div style={styles.header}>
-        <Link to="/" style={styles.backLink}>← 返回首页</Link>
+        <Link to="/search" style={styles.backLink}>← 返回查找错题页面</Link>
         <h1 style={styles.title}>错题预览</h1>
       </div>
 
@@ -164,14 +196,18 @@ const QuestionPreview = () => {
             <div style={styles.questionContent}>
               <h3 style={styles.questionTitle}>题干</h3>
               <p style={styles.contentText}>{question.content}</p>
-              
+
               {question.qimageurl && (
                 <div style={styles.imageContainer}>
-                  <img 
-                    src={question.qimageurl} 
-                    alt="题目图片" 
-                    style={styles.questionImage}
+                  <img
+                    src={question.qimageurl}
+                    alt="题目图片"
+                    style={{ ...styles.questionImage, cursor: 'pointer' }}
                     onError={handleImageError}
+                    onClick={() => openImageViewer(question.qimageurl, [
+                      question.qimageurl,
+                      question.aimageurl
+                    ].filter(Boolean))}
                   />
                 </div>
               )}
@@ -179,20 +215,24 @@ const QuestionPreview = () => {
 
             <div style={styles.section}>
               <h3 style={styles.sectionTitle}>错误答案</h3>
-              <p style={styles.contentText}>{question.eanswer}</p>
+              <div style={styles.contentText}>{renderLatex(question.eanswer)}</div>
             </div>
 
             <div style={styles.section}>
               <h3 style={styles.correctTitle}>正确答案</h3>
-              <p style={styles.contentText}>{question.canswer}</p>
-              
+              <p style={styles.contentText}>{renderLatex(question.canswer)}</p>
+
               {question.aimageurl && (
                 <div style={styles.imageContainer}>
-                  <img 
-                    src={question.aimageurl} 
-                    alt="答案图片" 
-                    style={styles.questionImage}
+                  <img
+                    src={question.aimageurl}
+                    alt="答案图片"
+                    style={{...styles.questionImage, cursor: 'pointer'}}
                     onError={handleImageError}
+                    onClick={() => openImageViewer(question.aimageurl, [
+                      question.qimageurl,
+                      question.aimageurl
+                    ].filter(Boolean))}
                   />
                 </div>
               )}
@@ -201,7 +241,7 @@ const QuestionPreview = () => {
             {question.analysis && (
               <div style={styles.section}>
                 <h3 style={styles.sectionTitle}>错误分析</h3>
-                <p style={styles.contentText}>{question.analysis}</p>
+                <p style={styles.contentText}>{renderLatex(question.analysis)}</p>
               </div>
             )}
 
@@ -212,16 +252,26 @@ const QuestionPreview = () => {
               </span>
             </div>
 
-            <div style={styles.likeContainer}>
-              <button 
+            {/* 修改点赞和不喜欢按钮容器 */}
+            <div style={styles.reactionContainer}>
+              <button
                 onClick={() => handleLike(question.id)}
                 style={styles.likeButton}
                 aria-label="点赞"
                 className="like-button"
-                disabled={isLiking[question.id]}
               >
-                <span style={styles.heartIcon}>❤</span>
-                <span style={styles.likeCount}>{likes[question.id] || 0}</span>
+                <i class="bi bi-hand-thumbs-up"></i>
+                <span style={styles.reactionCount}>{likes[question.id] || 0}</span>
+              </button>
+              
+              <button
+                onClick={() => handleDislike(question.id)}
+                style={styles.dislikeButton}
+                aria-label="不喜欢"
+                className="dislike-button"
+              >
+                <i class="bi bi-hand-thumbs-down"></i>
+                <span style={styles.reactionCount}>{dislikes[question.id] || 0}</span>
               </button>
             </div>
           </div>
@@ -261,7 +311,8 @@ const styles = {
     fontSize: '28px',
     fontWeight: 700,
     color: '#1976d2',
-    margin: 0
+    margin: 0,
+    textAlign: 'center',
   },
   questionsContainer: {
     display: 'grid',
@@ -349,9 +400,11 @@ const styles = {
     paddingTop: '10px',
     borderTop: '1px dashed #e3eaf2'
   },
-  likeContainer: {
+  // 新增反应容器样式，让两个按钮在同一行
+  reactionContainer: {
     display: 'flex',
-    justifyContent: 'flex-start', // 仅保留点赞按钮，调整对齐方式
+    gap: '12px', // 两个按钮之间的间距
+    justifyContent: 'flex-start',
     alignItems: 'center',
     marginTop: '15px',
     paddingTop: '15px',
@@ -368,12 +421,31 @@ const styles = {
     padding: '6px 16px',
     fontSize: '16px',
     cursor: 'pointer',
-    fontWeight: 500
+    fontWeight: 500,
+    whiteSpace: 'nowrap', // 防止按钮内容换行
+  },
+  // 新增不喜欢按钮样式
+  dislikeButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    background: 'none',
+    border: '1px solid #e74c3c',
+    color: '#e74c3c',
+    borderRadius: '20px',
+    padding: '6px 16px',
+    fontSize: '16px',
+    cursor: 'pointer',
+    fontWeight: 500,
+    whiteSpace: 'nowrap', // 防止按钮内容换行
   },
   heartIcon: {
     fontSize: '18px'
   },
-  likeCount: {
+  dislikeIcon: {
+    fontSize: '18px'
+  },
+  reactionCount: { // 统一计数样式
     minWidth: '20px',
     textAlign: 'center'
   },
@@ -437,26 +509,27 @@ style.textContent = `
     100% { transform: rotate(360deg); }
   }
 
-  .like-button {
+  .like-button, .dislike-button {
     transition: all 0.2s ease;
+    width: auto; /* 确保按钮宽度由内容决定 */
   }
   
   .like-button:hover {
     background: #e3f2fd;
   }
   
-  .like-button:active {
+  .dislike-button:hover {
+    background: #fdedeb;
+  }
+  
+  .like-button:active, .dislike-button:active {
     transform: scale(0.95);
   }
   
-  .like-button:hover .heart-icon {
+  .like-button:hover .heart-icon,
+  .dislike-button:hover .dislike-icon {
     transform: scale(1.2);
     transition: transform 0.2s ease;
-  }
-  
-  .like-button:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
   }
   
   @media (max-width: 480px) {
@@ -468,7 +541,7 @@ style.textContent = `
       font-size: 24px !important;
     }
     
-    .like-button {
+    .like-button, .dislike-button {
       padding: 5px 12px !important;
       font-size: 14px !important;
     }
