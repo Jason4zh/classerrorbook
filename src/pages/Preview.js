@@ -17,8 +17,8 @@ const QuestionPreview = () => {
   const [viewerVisible, setViewerVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState('');
   const [imageList, setImageList] = useState([]);
-  
-  // 新增评论相关状态
+  const [likeTimers, setLikeTimers] = useState({});
+  const [dislikeTimers, setDislikeTimers] = useState({});
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [commentLoading, setCommentLoading] = useState(false);
@@ -158,7 +158,7 @@ const QuestionPreview = () => {
       // 构建新的评论和作者数组
       const currentComments = currentData?.comments || [];
       const currentAuthors = currentData?.comment_authors || [];
-      
+
       const updatedComments = [...currentComments, newComment.trim()];
       const updatedAuthors = [...currentAuthors, userName];
 
@@ -180,10 +180,10 @@ const QuestionPreview = () => {
         author: userName,
         timestamp: new Date().toLocaleString()
       };
-      
+
       setComments(prev => [...prev, newCommentObj]);
       setNewComment('');
-      
+
     } catch (err) {
       console.error('提交评论失败:', err);
       setCommentError('评论提交失败，请重试');
@@ -199,17 +199,59 @@ const QuestionPreview = () => {
   };
 
   const handleLike = (questionId) => {
+    if (likeTimers[questionId]) {
+      clearTimeout(likeTimers[questionId]);
+    }
     setLikes(prev => ({
       ...prev,
       [questionId]: Math.max(0, prev[questionId] || 0) + 1
     }));
+    const timer = setTimeout(async () => {
+      try {
+        const newLikeCount = likes[questionId] + 1;
+        const { error } = await supabase
+          .from('question')
+          .update({ likes: newLikeCount })
+          .eq('id', questionId);
+
+        if (error) throw error;
+      } catch (err) {
+        console.error('更新点赞数失败:', err);
+        setLikes(prev => ({
+          ...prev,
+          [questionId]: Math.max(0, prev[questionId] - 1)
+        }));
+      }
+    }, 3000);
+    setLikeTimers(prev => ({ ...prev, [questionId]: timer }));
   };
 
   const handleDislike = (questionId) => {
+    if (dislikeTimers[questionId]) {
+      clearTimeout(dislikeTimers[questionId]);
+    }
     setDislikes(prev => ({
       ...prev,
       [questionId]: Math.max(0, prev[questionId] || 0) + 1
     }));
+    const timer = setTimeout(async () => {
+      try {
+        const newDislikeCount = dislikes[questionId] + 1;
+        const { error } = await supabase
+          .from('question')
+          .update({ dislikes: newDislikeCount })
+          .eq('id', questionId);
+
+        if (error) throw error;
+      } catch (err) {
+        console.error('更新不喜欢数失败:', err);
+        setDislikes(prev => ({
+          ...prev,
+          [questionId]: Math.max(0, prev[questionId] - 1)
+        }));
+      }
+    }, 3000);
+    setDislikeTimers(prev => ({ ...prev, [questionId]: timer }));
   };
 
   const handleImageError = (e) => {
@@ -218,9 +260,9 @@ const QuestionPreview = () => {
 
   const renderLatex = (content) => {
     if (!content) return null;
-    
+
     const parts = content.split(/(\$\$.*?\$\$|\$.*?\$)/gs);
-    
+
     return parts.map((part, index) => {
       if (part.startsWith('$$') && part.endsWith('$$')) {
         const formula = part.slice(2, -2).trim();
@@ -341,7 +383,7 @@ const QuestionPreview = () => {
                   <img
                     src={question.aimageurl}
                     alt="答案图片"
-                    style={{...styles.questionImage, cursor: 'pointer'}}
+                    style={{ ...styles.questionImage, cursor: 'pointer' }}
                     onError={handleImageError}
                     onClick={() => openImageViewer(question.aimageurl, [
                       question.qimageurl,
@@ -376,7 +418,7 @@ const QuestionPreview = () => {
                 <i className="bi bi-hand-thumbs-up"></i>
                 <span style={styles.reactionCount}>{likes[question.id] || 0}</span>
               </button>
-              
+
               <button
                 onClick={() => handleDislike(question.id)}
                 style={styles.dislikeButton}
@@ -393,7 +435,7 @@ const QuestionPreview = () => {
               <h3 style={styles.commentsTitle}>
                 评论 {comments.length > 0 && `(${comments.length})`}
               </h3>
-              
+
               {/* 评论列表 */}
               <div style={styles.commentsList}>
                 {comments.length > 0 ? (
@@ -622,7 +664,7 @@ const styles = {
     minWidth: '20px',
     textAlign: 'center'
   },
-  
+
   // 评论区域样式
   commentsSection: {
     marginTop: '25px',
