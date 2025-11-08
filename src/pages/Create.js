@@ -113,7 +113,7 @@ const Upload = () => {
         setFormError('图片上传失败，请重试')
         return
       }
-      imgUrl = "https://hqzemultusietooosnxt.supabase.co/storage/v1/object/public/questionimg/" + uploadData?.path
+      imgUrl = process.env.REACT_APP_SUPABASE_URL + "/storage/v1/object/public/questionimg/" + uploadData?.path
     }
     let answerImgUrl = null
     if (answerImg) {
@@ -127,7 +127,7 @@ const Upload = () => {
         setFormError('正确答案图片上传失败，请重试')
         return
       }
-      answerImgUrl = "https://hqzemultusietooosnxt.supabase.co/storage/v1/object/public/answerimg/" + uploadData?.path
+      answerImgUrl = process.env.REACT_APP_SUPABASE_URL + "/storage/v1/object/public/answerimg/" + uploadData?.path
       setAnswerImgUrl(answerImgUrl)
     }
 
@@ -225,8 +225,6 @@ const Upload = () => {
       setDeploySuccess(isDeployed);
       console.log('reviewQuestion determined isDeployed:', isDeployed);
       setReasoningContent(thinkingResult)
-
-      // --- Changed: use .select() and inspect returned data/error, add logs and explicit checks ---
       const { data: updateData, error: updateError } = await supabase
         .from('question')
         .update({ deployed: isDeployed })
@@ -236,17 +234,13 @@ const Upload = () => {
       console.log('supabase.update result:', { questionId, isDeployed, updateData, updateError });
 
       if (updateError) {
-        // 如果有错误，抛出以便上层捕获并提示
         throw new Error(`数据更新失败: ${updateError.message}`);
       }
-      // 如果没有错误但返回的数据为空，说明没有匹配到行或权限问题
       if (!updateData || updateData.length === 0) {
         throw new Error('更新返回为空，可能未找到记录或没有权限更新该记录（请检查 RLS 和 questionId）');
       }
-      // --- end changed ---
 
       console.log(processedResult, thinkingResult);
-      // 返回布尔结果，供调用处立即使用
       return isDeployed;
 
     } catch (error) {
@@ -360,12 +354,11 @@ const Upload = () => {
               }}>
                 正在审核，请耐心等待，不要退出页面
               </p>
-              <style jsx global>{`
-          @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-        }`}
+              <style>{`
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }`}
               </style>
             </div>
           )}

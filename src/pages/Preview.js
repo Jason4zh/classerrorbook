@@ -12,11 +12,18 @@ const QuestionPreview = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [likes, setLikes] = useState({});
-  const [dislikes, setDislikes] = useState({}); // 新增不喜欢状态
+  const [dislikes, setDislikes] = useState({});
   const { id } = useParams();
   const [viewerVisible, setViewerVisible] = useState(false);
   const [currentImage, setCurrentImage] = useState('');
   const [imageList, setImageList] = useState([]);
+  
+  // 新增评论相关状态
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [commentError, setCommentError] = useState(null);
 
   const subjectMap = {
     'chinese': '语文',
@@ -37,12 +44,57 @@ const QuestionPreview = () => {
     'essay': '解答题'
   };
 
-  const openImageViewer = (imageUrl, allImages) => {
-    setImageList(allImages);
-    setCurrentImage(imageUrl);
-    setViewerVisible(true);
-  };
+  // 获取用户名
+  useEffect(() => {
+    const getUsername = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData.user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', userData.user.id)
+          .single();
+        if (data) {
+          setUserName(data.username);
+        } else {
+          setUserName('匿名用户');
+        }
+      } else {
+        setUserName('匿名用户');
+      }
+    };
 
+    getUsername();
+  }, []);
+
+  // 获取评论数据
+  const fetchComments = async (questionId) => {
+    try {
+      const { data, error } = await supabase
+        .from('question')
+        .select('comments, comment_authors')
+        .eq('id', questionId)
+        .single();
+
+      if (error) throw error;
+
+      if (data && data.comments && data.comment_authors) {
+        // 将评论和作者组合成对象数组
+        const commentsList = data.comments.map((comment, index) => ({
+          id: index,
+          content: comment,
+          author: data.comment_authors[index] || '匿名用户',
+          timestamp: new Date().toLocaleString() // 这里可以添加真实的时间戳如果数据库有存储的话
+        }));
+        setComments(commentsList);
+      } else {
+        setComments([]);
+      }
+    } catch (err) {
+      console.error('获取评论失败:', err);
+      setComments([]);
+    }
+  };
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -58,15 +110,20 @@ const QuestionPreview = () => {
         if (error) throw error;
 
         const initialLikes = {};
-        const initialDislikes = {}; // 初始化不喜欢计数
+        const initialDislikes = {};
         data.forEach(question => {
           initialLikes[question.id] = Math.max(0, Number(question.likes) || 0);
-          initialDislikes[question.id] = Math.max(0, Number(question.dislikes) || 0); // 从数据库获取不喜欢数
+          initialDislikes[question.id] = Math.max(0, Number(question.dislikes) || 0);
         });
 
         setQuestions(data);
         setLikes(initialLikes);
-        setDislikes(initialDislikes); // 设置不喜欢状态
+        setDislikes(initialDislikes);
+
+        // 获取第一个问题的评论
+        if (data && data.length > 0) {
+          await fetchComments(data[0].id);
+        }
       } catch (err) {
         console.error('Error fetching questions:', err);
         setError('获取错题失败，请稍后重试');
@@ -76,9 +133,71 @@ const QuestionPreview = () => {
     };
 
     fetchQuestions();
-  }, []);
+  }, [id]);
 
-  // 简化的点赞处理，仅客户端计数+1，不调用API
+  // 提交评论
+  const handleCommentSubmit = async (questionId) => {
+    if (!newComment.trim()) {
+      setCommentError('评论内容不能为空');
+      return;
+    }
+
+    setCommentLoading(true);
+    setCommentError(null);
+
+    try {
+      // 获取当前的评论数据
+      const { data: currentData, error: fetchError } = await supabase
+        .from('question')
+        .select('comments, comment_authors')
+        .eq('id', questionId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // 构建新的评论和作者数组
+      const currentComments = currentData?.comments || [];
+      const currentAuthors = currentData?.comment_authors || [];
+      
+      const updatedComments = [...currentComments, newComment.trim()];
+      const updatedAuthors = [...currentAuthors, userName];
+
+      // 更新数据库
+      const { error: updateError } = await supabase
+        .from('question')
+        .update({
+          comments: updatedComments,
+          comment_authors: updatedAuthors
+        })
+        .eq('id', questionId);
+
+      if (updateError) throw updateError;
+
+      // 更新本地状态
+      const newCommentObj = {
+        id: comments.length,
+        content: newComment.trim(),
+        author: userName,
+        timestamp: new Date().toLocaleString()
+      };
+      
+      setComments(prev => [...prev, newCommentObj]);
+      setNewComment('');
+      
+    } catch (err) {
+      console.error('提交评论失败:', err);
+      setCommentError('评论提交失败，请重试');
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  const openImageViewer = (imageUrl, allImages) => {
+    setImageList(allImages);
+    setCurrentImage(imageUrl);
+    setViewerVisible(true);
+  };
+
   const handleLike = (questionId) => {
     setLikes(prev => ({
       ...prev,
@@ -86,7 +205,6 @@ const QuestionPreview = () => {
     }));
   };
 
-  // 新增不喜欢处理，与点赞逻辑相同
   const handleDislike = (questionId) => {
     setDislikes(prev => ({
       ...prev,
@@ -101,21 +219,17 @@ const QuestionPreview = () => {
   const renderLatex = (content) => {
     if (!content) return null;
     
-    // 分割文本和公式（假设公式用$$包裹块级公式，$包裹行内公式）
     const parts = content.split(/(\$\$.*?\$\$|\$.*?\$)/gs);
     
     return parts.map((part, index) => {
-      // 块级公式（$$...$$）
       if (part.startsWith('$$') && part.endsWith('$$')) {
         const formula = part.slice(2, -2).trim();
         return <BlockMath key={index} math={formula} />;
       }
-      // 行内公式（$...$）
       else if (part.startsWith('$') && part.endsWith('$')) {
         const formula = part.slice(1, -1).trim();
         return <InlineMath key={index} math={formula} />;
       }
-      // 普通文本
       else {
         return <span key={index}>{part}</span>;
       }
@@ -252,7 +366,6 @@ const QuestionPreview = () => {
               </span>
             </div>
 
-            {/* 修改点赞和不喜欢按钮容器 */}
             <div style={styles.reactionContainer}>
               <button
                 onClick={() => handleLike(question.id)}
@@ -260,7 +373,7 @@ const QuestionPreview = () => {
                 aria-label="点赞"
                 className="like-button"
               >
-                <i class="bi bi-hand-thumbs-up"></i>
+                <i className="bi bi-hand-thumbs-up"></i>
                 <span style={styles.reactionCount}>{likes[question.id] || 0}</span>
               </button>
               
@@ -270,9 +383,77 @@ const QuestionPreview = () => {
                 aria-label="不喜欢"
                 className="dislike-button"
               >
-                <i class="bi bi-hand-thumbs-down"></i>
+                <i className="bi bi-hand-thumbs-down"></i>
                 <span style={styles.reactionCount}>{dislikes[question.id] || 0}</span>
               </button>
+            </div>
+
+            {/* 评论区域 */}
+            <div style={styles.commentsSection}>
+              <h3 style={styles.commentsTitle}>
+                评论 {comments.length > 0 && `(${comments.length})`}
+              </h3>
+              
+              {/* 评论列表 */}
+              <div style={styles.commentsList}>
+                {comments.length > 0 ? (
+                  comments.map(comment => (
+                    <div key={comment.id} style={styles.commentItem}>
+                      <div style={styles.commentHeader}>
+                        <span style={styles.commentAuthor}>{comment.author}</span>
+                        <span style={styles.commentTime}>{comment.timestamp}</span>
+                      </div>
+                      <div style={styles.commentContent}>
+                        {comment.content}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div style={styles.noComments}>
+                    <i className="bi bi-chat-left" style={styles.noCommentsIcon}></i>
+                    <p>暂无评论，快来发表第一条评论吧</p>
+                  </div>
+                )}
+              </div>
+
+              {/* 评论输入框 */}
+              <div style={styles.commentForm}>
+                <div style={styles.commentInputContainer}>
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="写下你的评论..."
+                    style={styles.commentInput}
+                    rows="3"
+                    maxLength="500"
+                  />
+                  <div style={styles.commentActions}>
+                    <span style={styles.charCount}>
+                      {newComment.length}/500
+                    </span>
+                    <button
+                      onClick={() => handleCommentSubmit(question.id)}
+                      disabled={commentLoading || !newComment.trim()}
+                      style={{
+                        ...styles.commentSubmitBtn,
+                        ...(commentLoading || !newComment.trim() ? styles.commentSubmitBtnDisabled : {})
+                      }}
+                    >
+                      {commentLoading ? (
+                        <>
+                          <i className="bi bi-arrow-clockwise" style={styles.loadingIcon}></i>
+                          发布中...
+                        </>
+                      ) : (
+                        '发布评论'
+                      )}
+                    </button>
+                  </div>
+                </div>
+                {commentError && (
+                  <div style={styles.commentError}>{commentError}</div>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -400,13 +581,12 @@ const styles = {
     paddingTop: '10px',
     borderTop: '1px dashed #e3eaf2'
   },
-  // 新增反应容器样式，让两个按钮在同一行
   reactionContainer: {
     display: 'flex',
-    gap: '12px', // 两个按钮之间的间距
+    gap: '12px',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    marginTop: '15px',
+    marginBottom: '20px',
     paddingTop: '15px',
     borderTop: '1px solid #f0f0f0'
   },
@@ -422,9 +602,8 @@ const styles = {
     fontSize: '16px',
     cursor: 'pointer',
     fontWeight: 500,
-    whiteSpace: 'nowrap', // 防止按钮内容换行
+    whiteSpace: 'nowrap',
   },
-  // 新增不喜欢按钮样式
   dislikeButton: {
     display: 'flex',
     alignItems: 'center',
@@ -437,18 +616,135 @@ const styles = {
     fontSize: '16px',
     cursor: 'pointer',
     fontWeight: 500,
-    whiteSpace: 'nowrap', // 防止按钮内容换行
+    whiteSpace: 'nowrap',
   },
-  heartIcon: {
-    fontSize: '18px'
-  },
-  dislikeIcon: {
-    fontSize: '18px'
-  },
-  reactionCount: { // 统一计数样式
+  reactionCount: {
     minWidth: '20px',
     textAlign: 'center'
   },
+  
+  // 评论区域样式
+  commentsSection: {
+    marginTop: '25px',
+    paddingTop: '20px',
+    borderTop: '2px solid #f0f0f0'
+  },
+  commentsTitle: {
+    fontSize: '18px',
+    fontWeight: 600,
+    color: '#2c3e50',
+    marginBottom: '16px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+  },
+  commentsList: {
+    marginBottom: '20px',
+    maxHeight: '400px',
+    overflowY: 'auto'
+  },
+  commentItem: {
+    padding: '16px',
+    marginBottom: '12px',
+    background: '#f8fafc',
+    borderRadius: '12px',
+    border: '1px solid #e3eaf2',
+    transition: 'background-color 0.2s ease'
+  },
+  commentHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '8px'
+  },
+  commentAuthor: {
+    fontWeight: 600,
+    color: '#1976d2',
+    fontSize: '14px'
+  },
+  commentTime: {
+    fontSize: '12px',
+    color: '#7f8c8d'
+  },
+  commentContent: {
+    fontSize: '15px',
+    lineHeight: '1.5',
+    color: '#2c3e50',
+    wordBreak: 'break-word'
+  },
+  noComments: {
+    textAlign: 'center',
+    padding: '40px 20px',
+    color: '#7f8c8d'
+  },
+  noCommentsIcon: {
+    fontSize: '48px',
+    marginBottom: '12px',
+    color: '#bdc3c7'
+  },
+  commentForm: {
+    background: '#fff',
+    borderRadius: '12px',
+    border: '1px solid #e3eaf2',
+    padding: '16px'
+  },
+  commentInputContainer: {
+    marginBottom: '12px'
+  },
+  commentInput: {
+    width: '100%',
+    border: '1px solid #e3eaf2',
+    borderRadius: '8px',
+    padding: '12px',
+    fontSize: '15px',
+    resize: 'vertical',
+    fontFamily: 'inherit',
+    boxSizing: 'border-box',
+    transition: 'border-color 0.2s ease',
+    minHeight: '80px'
+  },
+  commentInputFocus: {
+    borderColor: '#3498db',
+    outline: 'none'
+  },
+  commentActions: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: '12px'
+  },
+  charCount: {
+    fontSize: '13px',
+    color: '#7f8c8d'
+  },
+  commentSubmitBtn: {
+    background: 'linear-gradient(90deg, #1976d2 60%, #42a5f5 100%)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '20px',
+    padding: '8px 20px',
+    fontSize: '14px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
+  },
+  commentSubmitBtnDisabled: {
+    background: '#bdc3c7',
+    cursor: 'not-allowed',
+    opacity: 0.6
+  },
+  commentError: {
+    color: '#e74c3c',
+    fontSize: '14px',
+    marginTop: '8px'
+  },
+  loadingIcon: {
+    animation: 'spin 1s linear infinite'
+  },
+
   loading: {
     display: 'flex',
     flexDirection: 'column',
@@ -511,7 +807,7 @@ style.textContent = `
 
   .like-button, .dislike-button {
     transition: all 0.2s ease;
-    width: auto; /* 确保按钮宽度由内容决定 */
+    width: auto;
   }
   
   .like-button:hover {
@@ -526,10 +822,14 @@ style.textContent = `
     transform: scale(0.95);
   }
   
-  .like-button:hover .heart-icon,
-  .dislike-button:hover .dislike-icon {
-    transform: scale(1.2);
-    transition: transform 0.2s ease;
+  .comment-item:hover {
+    background: #f1f8fe;
+  }
+  
+  .comment-input:focus {
+    border-color: #3498db !important;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
   }
   
   @media (max-width: 480px) {
@@ -544,6 +844,18 @@ style.textContent = `
     .like-button, .dislike-button {
       padding: 5px 12px !important;
       font-size: 14px !important;
+    }
+    
+    .comment-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+    
+    .comment-actions {
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-end;
     }
   }
 `;

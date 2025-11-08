@@ -224,7 +224,7 @@ const Edit = () => {
           .from('questionimg')
           .upload(fileName, questionImg)
         if (uploadError) throw new Error('图片上传失败')
-        newQimageurl = "https://hqzemultusietooosnxt.supabase.co/storage/v1/object/public/questionimg/" + uploadData?.path
+        newQimageurl = process.env.REACT_APP_SUPABASE_URL + "/storage/v1/object/public/questionimg/" + uploadData?.path
         setQimageurl(newQimageurl)
       }
 
@@ -237,7 +237,7 @@ const Edit = () => {
           .from('answerimg')
           .upload(fileName, answerImg)
         if (uploadError) throw new Error('正确答案图片上传失败')
-        newAimageurl = "https://hqzemultusietooosnxt.supabase.co/storage/v1/object/public/answerimg/" + uploadData?.path
+        newAimageurl = process.env.REACT_APP_SUPABASE_URL + "/storage/v1/object/public/answerimg/" + uploadData?.path
         setAimageurl(newAimageurl)
       }
 
@@ -253,7 +253,7 @@ const Edit = () => {
         author: userName || '匿名'
       }
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('question')
         .update(payload)
         .eq('id', finalId)
@@ -336,12 +336,12 @@ const Edit = () => {
                 color: '#1976d2'
               }}></i>
               <p style={{ color: '#2c3e50', fontSize: '20px', lineHeight: '1.6', fontWeight: 500 }}>正在审核，请耐心等待...</p>
-        <style jsx global>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
+              <style>{`
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+              `}</style>
             </div>
           )}
         </div>

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Link, useNavigate } from "react-router-dom"
+import { HashRouter as Router, Routes, Route, Link, useNavigate, Navigate } from "react-router-dom"
 import { useEffect, useState } from "react"
 import supabase from "./config/supabaseClient"
 import Index from "./pages/Index"
@@ -59,7 +59,6 @@ function AppRoutes() {
 
   return (
     <>
-      {/* 添加 CSS 动画 */}
       <style>
         {`
         @keyframes shimmer {
@@ -216,7 +215,7 @@ function AppRoutes() {
         <Route path="/edit/:id" element={<Edit />} />
         <Route path="/preview" element={<Preview />} />
         <Route path="/preview/:id" element={<Preview />} />
-        
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
   )
@@ -224,9 +223,9 @@ function AppRoutes() {
 
 function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <AppRoutes />
-    </BrowserRouter>
+    </Router>
   )
 }
 
