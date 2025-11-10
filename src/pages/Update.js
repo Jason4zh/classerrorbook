@@ -208,9 +208,9 @@ const Update = () => {
       <style>{styleSheet}</style>
 
       <div style={contentStyle}>
-        <h2 style={titleStyle}>?? ??????</h2>
+        <h2 style={titleStyle}>🚀 网站更新公告</h2>
 
-        {/* ??????? */}
+        {/* 新增的开始提示 */}
         <div
           className="start-prompt"
           style={startPromptStyle}
@@ -218,18 +218,18 @@ const Update = () => {
           onMouseLeave={handleStartHoverOut}
           onClick={handleStartClick}
         >
-          ?? ?????????
+          🎯 点击首页以开始探索
           <div style={startPromptBeforeStyle}></div>
         </div>
 
         <div className="text-content" style={textStyle}>
-          <p>? ????????1.4.1</p>
-          <p>?? ???????????????~</p>
-          <p>?? ????????????~</p>
+          <p>✨ 本网站当前版本：1.4.2</p>
+          <p>🎯 新功能正在陆续添加中，敬请期待~</p>
+          <p>🔮 前面的区域以后再来探索吧~</p>
         </div>
 
         <p style={textStyle}>
-          ???GitHub????????~
+          欢迎在GitHub上提出建议和反馈~
         </p>
 
         <a
@@ -241,15 +241,15 @@ const Update = () => {
           onMouseEnter={handleHover}
           onMouseLeave={handleHoverOut}
         >
-          ?? ?? GitHub ????
+          📝 前往 GitHub 提交反馈
         </a>
 
         <p style={textStyle}>
-          ?? New Issues ??????????????
+          点击 New Issues 提交你的反馈。感谢你的支持！
         </p>
 
         <div className="signature" style={signatureStyle}>
-          by Jason4zh ? 15322313759@163.com
+          by Jason4zh • 15322313759@163.com
         </div>
       </div>
     </div>

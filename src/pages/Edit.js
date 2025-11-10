@@ -333,6 +333,7 @@ const Edit = () => {
                 fontSize: '100px',
                 marginBottom: '20px',
                 animation: 'spin 1.5s linear infinite',
+                WebkitAnimation: 'spin 1.5s linear infinite',
                 color: '#1976d2'
               }}></i>
               <p style={{ color: '#2c3e50', fontSize: '20px', lineHeight: '1.6', fontWeight: 500 }}>正在审核，请耐心等待...</p>
@@ -341,7 +342,11 @@ const Edit = () => {
                   0% { transform: rotate(0deg); }
                   100% { transform: rotate(360deg); }
                 }
-              `}</style>
+                @-webkit-keyframes spin {
+                  0% { -webkit-transform: rotate(0deg); }
+                  100% { -webkit-transform: rotate(360deg); }
+                `}
+              </style>
             </div>
           )}
         </div>

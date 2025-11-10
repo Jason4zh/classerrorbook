@@ -340,10 +340,20 @@ const Upload = () => {
             )
           ) : (
             <div>
-              <i className="bi bi-arrow-clockwise" style={{
-                fontSize: '100px',
+              <style>{`
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+                .spin-animation {
+                  animation: spin 1.5s linear infinite !important;
+                  display: inline-block !important;
+                }
+                `}
+              </style>
+              <i className="bi bi-arrow-clockwise spin-animation" style={{
+                fontSize: '150px',
                 marginBottom: '20px',
-                animation: 'spin 1.5s linear infinite',
                 color: '#1976d2'
               }}></i>
               <p style={{
@@ -354,12 +364,6 @@ const Upload = () => {
               }}>
                 正在审核，请耐心等待，不要退出页面
               </p>
-              <style>{`
-                @keyframes spin {
-                  0% { transform: rotate(0deg); }
-                  100% { transform: rotate(360deg); }
-                }`}
-              </style>
             </div>
           )}
         </div>
