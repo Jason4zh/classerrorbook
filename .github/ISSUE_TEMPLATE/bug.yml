@@ -65,16 +65,4 @@ body:
     attributes:
       label: "期望行为"
       description: "请描述正常情况下应该出现什么结果"
-      placeholder: "例：图片应该正常显示，上传后应提示成功"      options:
-        - 电脑（Windows）
-        - 电脑（MacOS）
-        - 手机（Android）
-        - 手机（iOS）
-        - 其他
-    validations:
-      required: true
-  - type: textarea
-    id: supplementary-info
-    attributes:
-      label: 补充信息
-      description: 错误页面截图、控制台报错信息、网络环境等（如有）
+      placeholder: "例：图片应该正常显示，上传后应提示成功"
