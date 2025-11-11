@@ -1,0 +1,26 @@
+name: 疑问/求助
+about: 咨询使用问题或求助开发相关困难
+title: "【疑问/求助】- "
+body:
+  - type: textarea
+    id: problem-description
+    attributes:
+      label: 问题描述
+      description: 详细说明疑问或遇到的困难
+      placeholder: 例：执行npm start后提示“缺少依赖”，邮箱验证码无法接收
+    validations:
+      required: true
+  - type: textarea
+    id: tried-operations
+    attributes:
+      label: 已尝试操作
+      description: 列出已尝试的解决方法
+      placeholder: 例：重新安装nodejs，检查邮箱垃圾邮件
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 补充信息
+      description: 相关报错截图、操作环境（如nodejs版本、操作系统）
+      placeholder: 例：nodejs版本18.16.0，操作系统Windows 11，报错截图见下方：
