@@ -1,15 +1,5 @@
-# 核心配置：禁用空白Issue，强制选模板
 blank_issues_enabled: false
-
-# 模板列表（单个template对应单个文件，GitHub可直接识别）
-templates:
-  - name: Bug 反馈
-    template: bug.yml
-  - name: 功能需求
-    template: feature.yml
-  - name: 优化建议
-    template: optimization.yml
-  - name: 疑问/求助
-    template: help.yml
-  - name: 其他问题
-    template: other.yml
+contact_links:
+  - name: 📚 项目文档
+    url: https://github.com/Jason4zh/classerrorbook#readme
+    about: 查看项目使用说明
