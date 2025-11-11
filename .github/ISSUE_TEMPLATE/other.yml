@@ -1,0 +1,17 @@
+name: 其他问题
+about: 不属于以上分类的其他需求或疑问
+title: "【其他】- "
+body:
+  - type: textarea
+    id: details
+    attributes:
+      label: 问题详情
+      description: 详细说明需求、疑问或其他内容
+      placeholder: 例：希望新增班级公告板块，方便老师发布学习任务
+    validations:
+      required: true
+  - type: textarea
+    id: supplement
+    attributes:
+      label: 相关补充
+      description: 可附加必要的说明或截图（如有）
