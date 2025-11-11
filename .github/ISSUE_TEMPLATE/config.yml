@@ -1,0 +1,26 @@
+# 模板选择页核心配置
+blank_issues_enabled: false  # 禁用空白Issue提交，强制用户选择模板
+contact_links:
+  - name: 项目使用文档
+    url: https://github.com/Jason4zh/classerrorbook/blob/main/README.md
+    about: 优先查看README，常见问题可能已收录
+  - name: 紧急问题反馈
+    url: https://github.com/Jason4zh/classerrorbook/issues
+    about: 遇紧急情况可在此留言，会尽快回复
+
+# 模板分类配置（已适配修改后的文件名：feature.yml、bug.yml）
+templates:
+  - name: 问题反馈类
+    about: 报告Bug或咨询使用/开发中的疑问
+    templates:
+      - bug.yml  # 对应修改后的Bug反馈模板文件名
+      - help.yml # 疑问/求助模板（文件名未变）
+  - name: 功能建议类
+    about: 新增功能需求或优化现有功能
+    templates:
+      - feature.yml  # 对应修改后的功能需求模板文件名
+      - optimization.yml # 优化建议模板（文件名未变）
+  - name: 其他问题
+    about: 不属于以上分类的需求或疑问
+    templates:
+      - other.yml # 其他问题模板（文件名未变）
