@@ -1,19 +1,15 @@
-# 核心配置：禁用空白Issue，仅保留模板选择
-blank_issues_enabled: false  # 强制用户选择模板，无法提交空白Issue
+# 核心配置：禁用空白Issue，强制选模板
+blank_issues_enabled: false
 
-# 模板分类（适配文件名：feature.yml、bug.yml）
+# 模板列表（单个template对应单个文件，GitHub可直接识别）
 templates:
-  - name: 问题反馈类
-    about: 报告Bug或咨询使用/开发疑问
-    templates:
-      - bug.yml
-      - help.yml
-  - name: 功能建议类
-    about: 新增功能或优化现有功能
-    templates:
-      - feature.yml
-      - optimization.yml
+  - name: Bug 反馈
+    template: bug.yml
+  - name: 功能需求
+    template: feature.yml
+  - name: 优化建议
+    template: optimization.yml
+  - name: 疑问/求助
+    template: help.yml
   - name: 其他问题
-    about: 不属于以上分类的内容
-    templates:
-      - other.yml
+    template: other.yml
