@@ -136,7 +136,7 @@ const Edit = () => {
           messages: [
             {
               role: "system",
-              content: "请审核以下错题信息是否完整合规，重点检查是否包含敏感内容，学科匹配性，和其是否符合一个学生的错题内容所应该有的，不需要深究题型问题和题目答案是否正确，如若审核通过，则输出字符串'是'，否则输出字符串'不是'"
+              content: "请审核以下错题信息是否完整合规，重点检查是否包含敏感内容，学科匹配性，和其是否符合一个学生的错题内容所应该有的，不需要深究题型问题和题目答案是否正确，但需要确定这是否是一个正常的题目，如若审核通过，则输出字符串'是'，否则输出字符串'不是'"
             },
             {
               role: "user",
@@ -160,6 +160,7 @@ const Edit = () => {
       const result = await response.json()
       const processedResult = result.choices?.[0]?.message?.content || ""
       const thinkingResult = result.choices?.[0]?.message?.reasoning_content || ""
+      console.log(thinkingResult)
       const isDeployed = !processedResult.trim().includes("不是")
       setDeploySuccess(isDeployed)
       setReasoningContent(thinkingResult)
@@ -329,11 +330,9 @@ const Edit = () => {
             )
           ) : (
             <div>
-              <i className="bi bi-arrow-clockwise" style={{
+              <i className="bi bi-arrow-clockwise spin-animation" style={{
                 fontSize: '100px',
                 marginBottom: '20px',
-                animation: 'spin 1.5s linear infinite',
-                WebkitAnimation: 'spin 1.5s linear infinite',
                 color: '#1976d2'
               }}></i>
               <p style={{ color: '#2c3e50', fontSize: '20px', lineHeight: '1.6', fontWeight: 500 }}>正在审核，请耐心等待...</p>
@@ -342,9 +341,10 @@ const Edit = () => {
                   0% { transform: rotate(0deg); }
                   100% { transform: rotate(360deg); }
                 }
-                @-webkit-keyframes spin {
-                  0% { -webkit-transform: rotate(0deg); }
-                  100% { -webkit-transform: rotate(360deg); }
+                .spin-animation {
+                  animation: spin 1.5s linear infinite !important;
+                  display: inline-block !important;
+                }
                 `}
               </style>
             </div>

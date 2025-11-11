@@ -58,7 +58,7 @@ const Home = () => {
         .from('question')
         .select()
         .eq('deployed', true)
-        .order('id', { ascending: true })
+        .order('id', { ascending: false })
       if (error) {
         setFetchError('Could not fetch the questions')
         setQuestions([])
