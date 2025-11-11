@@ -1,26 +1,54 @@
-name: 疑问/求助
-about: 咨询使用问题或求助开发相关困难
+name: "❓ 疑问/求助"
+description: "咨询使用问题或求助开发相关困难"
 title: "【疑问/求助】- "
+labels: ["question", "help wanted"]
 body:
   - type: textarea
     id: problem-description
     attributes:
-      label: 问题描述
-      description: 详细说明疑问或遇到的困难
-      placeholder: 例：执行npm start后提示“缺少依赖”，邮箱验证码无法接收
+      label: "问题描述"
+      description: "详细说明疑问或遇到的困难"
+      placeholder: "例：执行npm start后提示"缺少依赖"，邮箱验证码无法接收"
     validations:
       required: true
+      
   - type: textarea
     id: tried-operations
     attributes:
-      label: 已尝试操作
-      description: 列出已尝试的解决方法
-      placeholder: 例：重新安装nodejs，检查邮箱垃圾邮件
+      label: "已尝试操作"
+      description: "列出已尝试的解决方法"
+      placeholder: "例：重新安装nodejs，检查邮箱垃圾邮件"
     validations:
       required: true
+      
   - type: textarea
     id: environment
     attributes:
-      label: 补充信息
-      description: 相关报错截图、操作环境（如nodejs版本、操作系统）
-      placeholder: 例：nodejs版本18.16.0，操作系统Windows 11，报错截图见下方：
+      label: "补充信息"
+      description: "相关报错截图、操作环境（如nodejs版本、操作系统）"
+      placeholder: "例：nodejs版本，操作系统，报错截图见下方："
+      
+  - type: dropdown
+    id: question-type
+    attributes:
+      label: "问题类型"
+      description: "请选择问题所属类别"
+      options:
+        - "使用问题 - 关于如何使用错题本功能"
+        - "开发问题 - 关于代码、部署、开发环境"
+        - "配置问题 - 关于项目配置、环境变量"
+        - "其他类型问题"
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: "紧急程度"
+      description: "请选择问题的紧急程度"
+      options:
+        - "紧急 - 功能完全无法使用"
+        - "重要 - 影响主要功能使用"
+        - "一般 - 有替代方案或影响较小"
+    validations:
+      required: true
