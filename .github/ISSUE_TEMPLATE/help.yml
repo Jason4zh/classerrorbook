@@ -8,7 +8,7 @@ body:
     attributes:
       label: "问题描述"
       description: "详细说明疑问或遇到的困难"
-      placeholder: "例：执行npm start后提示"缺少依赖"，邮箱验证码无法接收"
+      placeholder: '例：执行npm start后提示"缺少依赖"，邮箱验证码无法接收'
     validations:
       required: true
       
