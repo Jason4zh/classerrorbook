@@ -1,28 +1,50 @@
-name: 优化建议
-about: 对现有功能提出优化改进建议
+name: "🔧 优化建议"
+description: "对现有功能提出优化改进建议"
 title: "【优化建议】- "
+labels: ["enhancement", "optimization"]
 body:
   - type: textarea
     id: current-problem
     attributes:
-      label: 当前问题
-      description: 说明现有功能的不足或待优化点
-      placeholder: 例：检索时无法同时筛选学科和题型，关键词搜索无法匹配题干中的公式
+      label: "当前问题"
+      description: "说明现有功能的不足或待优化点"
+      placeholder: "例：检索时无法同时筛选学科和题型，关键词搜索无法匹配题干中的公式"
     validations:
       required: true
+      
   - type: textarea
     id: optimization-plan
     attributes:
-      label: 优化方案
-      description: 提出具体的改进思路或方案
-      placeholder: 例：增加“学科+题型”组合筛选框，支持LaTeX公式关键词匹配
+      label: "优化方案"
+      description: "提出具体的改进思路或方案"
+      placeholder: "例：增加"学科+题型"组合筛选框，支持LaTeX公式关键词匹配"
     validations:
       required: true
+      
   - type: textarea
     id: expected-value
     attributes:
-      label: 预期价值
-      description: 优化后对用户的帮助或带来的效果
-      placeholder: 例：缩短错题查找时间，提升检索精准度
+      label: "预期价值"
+      description: "优化后对用户的帮助或带来的效果"
+      placeholder: "例：缩短错题查找时间，提升检索精准度"
     validations:
       required: true
+      
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "优化优先级"
+      description: "请评估这个优化的重要程度"
+      options:
+        - "高 - 严重影响使用体验"
+        - "中 - 明显提升效率"
+        - "低 - 细微改进"
+    validations:
+      required: true
+      
+  - type: textarea
+    id: affected-features
+    attributes:
+      label: "影响范围"
+      description: "此优化会影响哪些功能模块"
+      placeholder: "例：搜索功能、错题筛选模块"
