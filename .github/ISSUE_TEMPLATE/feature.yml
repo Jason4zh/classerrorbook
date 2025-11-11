@@ -1,0 +1,26 @@
+name: 功能需求
+about: 提交新功能需求或功能扩展建议
+title: "【功能需求】- "
+body:
+  - type: textarea
+    id: requirement-description
+    attributes:
+      label: 需求描述
+      description: 请详细说明需新增/扩展的功能，包括使用场景、核心需求点及预期效果
+      placeholder: 例：多人协作整理错题时，支持一次上传50道以内错题，上传后自动按学科分类
+    validations:
+      required: true
+  - type: textarea
+    id: necessity
+    attributes:
+      label: 必要性说明
+      description: 该功能对班级错题库的帮助（如提升效率、优化体验等）
+      placeholder: 例：减少重复操作，提升错题整理效率
+    validations:
+      required: true
+  - type: textarea
+    id: supplementary
+    attributes:
+      label: 补充建议
+      description: 可附加参考案例、设计思路或相关截图（如有）
+      placeholder: 例：参考某错题APP的批量上传界面，截图见下方：
