@@ -1,0 +1,49 @@
+name: Bug 反馈
+about: 报告使用过程中遇到的程序错误
+title: "【Bug 反馈】- "
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: 触发步骤
+      description: 详细描述触发Bug的操作流程
+      placeholder: 1. 点击首页“上传错题”；2. 选择数学学科；3. 上传PNG格式错题图片；4. 提交后刷新页面
+    validations:
+      required: true
+  - type: textarea
+    id: error-performance
+    attributes:
+      label: 错误表现
+      description: 具体说明异常现象
+      placeholder: 例：图片显示为破损图标，提交后页面卡顿崩溃
+    validations:
+      required: true
+  - type: dropdown
+    id: browser
+    attributes:
+      label: 浏览器型号及版本
+      options:
+        - Chrome（请在补充信息中注明版本）
+        - Edge（请在补充信息中注明版本）
+        - Firefox（请在补充信息中注明版本）
+        - Safari（请在补充信息中注明版本）
+        - 其他（请在补充信息中注明）
+    validations:
+      required: true
+  - type: dropdown
+    id: device
+    attributes:
+      label: 设备类型
+      options:
+        - 电脑（Windows）
+        - 电脑（MacOS）
+        - 手机（Android）
+        - 手机（iOS）
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: supplementary-info
+    attributes:
+      label: 补充信息
+      description: 错误页面截图、控制台报错信息、网络环境等（如有）
