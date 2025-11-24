@@ -360,7 +360,7 @@ const Edit = () => {
         <h1 className="page-title" style={{ fontSize: 32, fontWeight: 700, color: '#1976d2', marginBottom: 28, textAlign: 'center', letterSpacing: 1 }}>编辑错题</h1>
 
         <div className="card" style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 24px rgba(25, 118, 210, 0.07)', padding: '32px 24px', marginBottom: 32 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, color: '#1976d2', marginBottom: 18 }}>修改错题信息</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 600, color: '#1976d2', marginBottom: 18}}>修改错题信息</h2>
 
           <form id="editForm" onSubmit={handleSubmit}>
             <div style={{ marginBottom: 22 }}>

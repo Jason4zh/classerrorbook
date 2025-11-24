@@ -223,9 +223,10 @@ const Update = () => {
         </div>
 
         <div className="text-content" style={textStyle}>
-          <p>✨ 本网站当前版本：1.4.3</p>
+          <p>✨ 本网站当前版本：1.5.0</p>
           <p>🎯 新功能正在陆续添加中，敬请期待~</p>
           <p>🔮 前面的区域以后再来探索吧~</p>
+          <p>🐛 如果发现任何问题，欢迎反馈！</p>
         </div>
 
         <p style={textStyle}>

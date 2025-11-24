@@ -120,7 +120,6 @@ const QuestionPreview = () => {
         setLikes(initialLikes);
         setDislikes(initialDislikes);
 
-        // 获取第一个问题的评论
         if (data && data.length > 0) {
           await fetchComments(data[0].id);
         }

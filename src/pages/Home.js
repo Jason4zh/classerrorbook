@@ -17,12 +17,61 @@ const Home = () => {
   const [allImages, setAllImages] = useState([]);
   const [uploaders, setUploaders] = useState([]);
   const [selectedUploader, setSelectedUploader] = useState('');
+  const [deleteConfirmStep, setDeleteConfirmStep] = useState(0);
+  const [deleteQuestionId, setDeleteQuestionId] = useState(null);
+  const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
 
-  // 处理LaTeX公式渲染
+  const deleteConfirmMessages = [
+    "确认要删除这条错题吗？",
+    "删除后将无法恢复，确定要继续吗？",
+    "请再次确认，这将是不可逆的操作",
+    "真的要删除这条宝贵的错题记录吗？",
+    "删除后其他同学将无法看到这条错题",
+    "这是最后一次学习机会，确定要放弃吗？",
+    "删除操作会影响数据完整性，请三思",
+    "错题是进步的阶梯，真的要删除吗？",
+    "知识无价，删除请谨慎考虑",
+    "错题是学习路上的宝贵财富，请珍惜",
+    "删除意味着永远失去这份学习资料",
+    "您的删除操作将影响知识库的完整性",
+    "请确认这不是一时冲动的决定",
+    "错题回顾能避免重复犯错，确定要删除吗？",
+    "删除后无法找回，建议先备份再操作",
+    "这条错题可能对其他同学有帮助，确定删除？",
+    "学习成长需要积累，删除请三思而行",
+    "错题是检验学习成果的镜子，请慎重",
+    "删除操作不可撤销，请再次确认",
+    "知识积累不易，删除前请深思熟虑",
+    "这条记录可能在未来复习时用到",
+    "删除错题等于放弃了一次改进机会",
+    "请确保已充分理解这道题目的知识点",
+    "错题本的价值在于反复学习，确定删除？",
+    "删除后相关学习数据将永久丢失",
+    "这是您辛勤整理的学习成果，请珍惜",
+    "错题是通往成功的垫脚石，请谨慎处理",
+    "删除前请考虑是否已掌握相关知识",
+    "学习是一个循环过程，错题很重要",
+    "密码的，你tm真的要删除吗？",
+    "666这么坚决是人我吃",
+    "他妈的你还真点到最后了",
+    "卧槽你真狠啊",
+    "你这是要和错题说再见吗？",
+    "你确定你不想再考虑一下吗？",
+    "你这是在和知识作对啊！",
+    "你这是在自毁前程啊！",
+    "你这是在断送自己的未来啊！",
+    "你这是在放弃提升自己的机会啊！",
+    "你这是在和学习说拜拜啊！",
+    "你这是在和进步说再见啊！",
+    "你这是在和成功说拜拜啊！",
+    "你这是在和未来说再见啊！",
+    "你这是在和希望说拜拜啊！",
+    "你这是在和梦想说再见啊！",
+    "最终确认：确定要永久删除这条错题吗？"
+  ];
+
   const renderLatex = (content) => {
     if (!content) return null;
-
-    // 处理块级公式（$$...$$）
     const blockRegex = /\$\$(.*?)\$\$/g;
     if (blockRegex.test(content)) {
       const parts = content.split(blockRegex);
@@ -30,7 +79,6 @@ const Home = () => {
         index % 2 === 1 ? (
           <BlockMath key={index} math={part} />
         ) : (
-          // 处理行内公式（$...$）
           part.split(/\$(.*?)\$/g).map((inlinePart, i) =>
             i % 2 === 1 ? (
               <InlineMath key={i} math={inlinePart} />
@@ -42,7 +90,6 @@ const Home = () => {
       );
     }
 
-    // 仅处理行内公式
     return content.split(/\$(.*?)\$/g).map((part, index) =>
       index % 2 === 1 ? (
         <InlineMath key={index} math={part} />
@@ -115,6 +162,60 @@ const Home = () => {
     setFilteredQuestions(filtered);
   };
 
+  const generateRandomPosition = () => {
+    const popupWidth = 500;
+    const popupHeight = 300;
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    const maxLeft = viewportWidth - popupWidth;
+    const maxTop = viewportHeight - popupHeight;
+
+    const randomLeft = Math.max(0, Math.min(maxLeft, Math.random() * maxLeft));
+    const randomTop = Math.max(0, Math.min(maxTop, Math.random() * maxTop));
+
+    setPopupPosition({
+      top: randomTop,
+      left: randomLeft
+    });
+  };
+
+  const startDeleteConfirm = (id) => {
+    setDeleteQuestionId(id);
+    setDeleteConfirmStep(1);
+    generateRandomPosition();
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirmStep(0);
+    setDeleteQuestionId(null);
+  };
+
+  const confirmDelete = async () => {
+    if (deleteConfirmStep < deleteConfirmMessages.length) {
+      generateRandomPosition();
+      setDeleteConfirmStep(prev => prev + 1);
+    } else {
+      await handledelete(deleteQuestionId);
+      setDeleteConfirmStep(0);
+      setDeleteQuestionId(null);
+    }
+  };
+
+  const handledelete = async (id) => {
+    const { data, error } = await supabase
+      .from('question')
+      .delete()
+      .eq('id', id)
+    if (error) {
+      console.log('删除错题时出错:', error);
+    } else {
+      console.log('错题已删除:', data);
+      setQuestions(questions.filter(q => q.id !== id));
+    }
+  };
+
   useEffect(() => {
     setFilteredQuestions(questions);
   }, [questions]);
@@ -147,12 +248,140 @@ const Home = () => {
         wordBreak: 'break-all'
       }}
     >
-      {/* 导航 */}
+      {deleteConfirmStep > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            }
+          }}
+          tabIndex={0}
+        >
+          <div style={{
+            position: 'absolute',
+            top: `${popupPosition.top}px`,
+            left: `${popupPosition.left}px`,
+            background: '#fff',
+            borderRadius: '16px',
+            padding: '32px',
+            maxWidth: '500px',
+            width: '90%',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              fontSize: '48px',
+              color: deleteConfirmStep === deleteConfirmMessages.length ? '#e74c3c' : '#f39c12',
+              marginBottom: '20px'
+            }}>
+              {deleteConfirmStep === deleteConfirmMessages.length ? '⚠️' : '❓'}
+            </div>
+
+            <h3 style={{
+              color: '#2c3e50',
+              fontSize: '20px',
+              marginBottom: '16px',
+              fontWeight: 600
+            }}>
+              删除确认
+            </h3>
+
+            <p style={{
+              color: '#34495e',
+              fontSize: '16px',
+              lineHeight: '1.6',
+              marginBottom: '24px'
+            }}>
+              {deleteConfirmMessages[deleteConfirmStep - 1]}
+            </p>
+
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'center'
+            }}>
+              <button
+                onClick={cancelDelete}
+                style={{
+                  padding: '12px 24px',
+                  border: '2px solid #bdc3c7',
+                  background: 'transparent',
+                  color: '#7f8c8d',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.background = '#ecf0f1';
+                  e.target.style.borderColor = '#95a5a6';
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.background = 'transparent';
+                  e.target.style.borderColor = '#bdc3c7';
+                }}
+              >
+                取消删除
+              </button>
+
+              <button
+                onClick={confirmDelete}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                  }
+                }}
+                style={{
+                  padding: '12px 24px',
+                  background: deleteConfirmStep === deleteConfirmMessages.length
+                    ? 'linear-gradient(90deg, #e74c3c 60%, #c0392b 100%)'
+                    : 'linear-gradient(90deg, #3498db 60%, #2980b9 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.transform = 'translateY(-2px)';
+                  e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.transform = 'translateY(0)';
+                  e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)';
+                }}
+              >
+                {deleteConfirmStep === deleteConfirmMessages.length ? '最终确认删除' : '继续确认'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="nav" style={{ marginBottom: 20 }}>
         <Link to='/' className="nav-link" style={{ color: '#3498db', textDecoration: 'none', fontSize: 16 }}>← 返回首页</Link>
       </div>
 
-      {/* 标题 */}
       <h1 className="title" style={{
         fontSize: 32,
         fontWeight: 700,
@@ -162,7 +391,6 @@ const Home = () => {
         letterSpacing: 1
       }}>查找错题</h1>
 
-      {/* 筛选卡片 */}
       <div className="card" style={{
         background: '#fff',
         borderRadius: 16,
@@ -275,7 +503,6 @@ const Home = () => {
         </div>
       </div>
 
-      {/* 错题展示卡片 */}
       <div className="card" style={{
         background: '#fff',
         borderRadius: 16,
@@ -348,7 +575,7 @@ const Home = () => {
                 </span>
                 <Link
                   to={`/preview/${q.id}`}
-                  style={{ textDecoration: 'none' }}  // 移除链接默认下划线
+                  style={{ textDecoration: 'none' }}
                   key={q.id || idx}
                 >
                   <div className="question" style={{ fontSize: 16, margin: '12px 0 10px 0', lineHeight: 1.7, color: '#34495e' }}>
@@ -427,6 +654,18 @@ const Home = () => {
                     fontWeight: 600,
                     fontSize: 14
                   }}>编辑</Link>
+                  <button onClick={() => startDeleteConfirm(q.id)} style={{
+                    padding: '8px 12px',
+                    background: '#e74c3c',
+                    color: '#fff',
+                    borderRadius: 8,
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                    fontSize: 14,
+                    cursor: 'pointer',
+                    border: 'none'
+                  }}>删除</button>
+
                 </div>
               </div>
             ))

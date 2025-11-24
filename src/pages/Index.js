@@ -53,6 +53,27 @@ const Index = () => {
           查找错题
         </Link>
 
+        <Link to="/undeployed" className="main-btn undeployed-btn" style={{
+          padding: '16px 0',
+          backgroundColor: '#ff6b6b',
+          color: 'white',
+          border: 'none',
+          borderRadius: 8,
+          fontSize: 18,
+          textDecoration: 'none',
+          transition: 'all 0.3s ease',
+          boxShadow: '0 4px 15px rgba(255, 107, 107, 0.2)'
+        }}
+          onMouseOver={(e) => {
+            e.target.style.transform = 'translateY(-2px)';
+            e.target.style.boxShadow = '0 6px 20px rgba(255, 107, 107, 0.3)';
+          }}
+          onMouseOut={(e) => {
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = '0 4px 15px rgba(255, 107, 107, 0.2)';
+          }}>
+          审核未通过错题
+        </Link>
         {/* 新增的更新页面按钮 */}
         <Link to="/update" className="update-btn" style={{
           padding: '16px 0',
